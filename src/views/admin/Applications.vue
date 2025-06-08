@@ -47,45 +47,8 @@
       </div>
       <!-- Scrollable Content -->
       <div class="scrollable-content">
-        <!-- Stats Cards -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-file-alt"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ applications.length }}</p>
-              <p class="stat-label">Total Applications</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon pending">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ pendingApplications.length }}</p>
-              <p class="stat-label">Pending</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon approved">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ approvedApplications.length }}</p>
-              <p class="stat-label">Approved</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon rejected">
-              <i class="fas fa-times-circle"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ rejectedApplications.length }}</p>
-              <p class="stat-label">Rejected</p>
-            </div>
-          </div>
-        </div>
+  
+        
 
         <!-- Applications Tables -->
         <div class="applications-container">
@@ -93,10 +56,10 @@
           <div class="application-section">
             <div class="section-header pending">
               <div class="section-title">
+                <span class="count-badge">{{ pendingApplications.length }}</span>
                 <i class="fas fa-clock"></i>
                 <h3>Pending Applications</h3>
               </div>
-              <span class="count-badge">{{ pendingApplications.length }}</span>
             </div>
             <div class="table-container">
               <table class="applications-table">
@@ -165,10 +128,10 @@
           <div class="application-section">
             <div class="section-header approved">
               <div class="section-title">
+                <span class="count-badge">{{ approvedApplications.length }}</span>
                 <i class="fas fa-check-circle"></i>
                 <h3>Approved Applications</h3>
               </div>
-              <span class="count-badge">{{ approvedApplications.length }}</span>
             </div>
             <div class="table-container">
               <table class="applications-table">
@@ -231,10 +194,10 @@
           <div class="application-section">
             <div class="section-header rejected">
               <div class="section-title">
+                <span class="count-badge">{{ rejectedApplications.length }}</span>
                 <i class="fas fa-times-circle"></i>
                 <h3>Rejected Applications</h3>
               </div>
-              <span class="count-badge">{{ rejectedApplications.length }}</span>
             </div>
             <div class="table-container">
               <table class="applications-table">
@@ -326,6 +289,14 @@
                     <label>Last Name</label>
                     <p>{{ getLastName(selectedApplication.applicant.name) }}</p>
                   </div>
+                  <div class="detail-item">
+                    <label>Middle Name</label>
+                    <p>{{ getMiddleName(selectedApplication.applicant.name) || 'N/A' }}</p>
+                  </div>
+                  <div class="detail-item">
+                    <label>Suffix</label>
+                    <p>{{ getSuffix(selectedApplication.applicant.name) || 'N/A' }}</p>
+                  </div>
                   <div class="detail-item full-width">
                     <label>Email</label>
                     <p class="email-text">{{ selectedApplication.applicant.email }}</p>
@@ -357,6 +328,9 @@
                     <label>Address</label>
                     <p>
                       {{ selectedApplication.livingSituation?.address?.street || 'Not provided' }}<br>
+                      <span v-if="selectedApplication.livingSituation?.address?.barangay" class="barangay-text">
+                        Barangay: {{ selectedApplication.livingSituation?.address?.barangay }}<br>
+                      </span>
                       {{ selectedApplication.livingSituation?.address?.city || '' }}
                       {{ selectedApplication.livingSituation?.address?.state || '' }}
                       {{ selectedApplication.livingSituation?.address?.zip || '' }}<br>
@@ -503,6 +477,34 @@
             </div>
           </div>
         </div>
+
+        <!-- Success Notification -->
+        <div v-if="showSuccessNotification" class="admin-notification success-notification">
+          <div class="notification-content">
+            <i class="fas fa-check-circle"></i>
+            <div class="notification-text">
+              <h4>{{ successNotificationTitle }}</h4>
+              <p>{{ successNotificationMessage }}</p>
+            </div>
+            <button @click="dismissSuccessNotification" class="close-notification">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Notification -->
+        <div v-if="showErrorNotification" class="admin-notification error-notification">
+          <div class="notification-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="notification-text">
+              <h4>{{ errorNotificationTitle }}</h4>
+              <p>{{ errorNotificationMessage }}</p>
+            </div>
+            <button @click="dismissErrorNotification" class="close-notification">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -520,7 +522,14 @@ export default {
       error: null,
       showRejectionModal: false,
       rejectionReason: '',
-      applicationToReject: null
+      applicationToReject: null,
+      // Add notification-related data properties
+      showSuccessNotification: false,
+      successNotificationTitle: '',
+      successNotificationMessage: '',
+      showErrorNotification: false,
+      errorNotificationTitle: '',
+      errorNotificationMessage: ''
     }
   },
   computed: {
@@ -822,6 +831,11 @@ export default {
 
               if (!petResponse.ok) {
                 console.error(`Failed to update pet status: ${petResponse.statusText}`);
+                // Show error notification
+                this.showErrorNotification = true;
+                this.errorNotificationTitle = 'Pet Status Update Failed';
+                this.errorNotificationMessage = `Could not update ${application.pet.name}'s status to Adopted. Please try again.`;
+                setTimeout(() => this.dismissErrorNotification(), 5000);
               } else {
                 const petResult = await petResponse.json();
                 if (petResult.success) {
@@ -873,29 +887,126 @@ export default {
                     console.error('Error updating adoption history:', historyError);
                   }
 
-                  // Notify the user that the pet status has been updated
-                  alert(`Application approved! Pet ${application.pet.name} has been marked as Adopted.`);
+                  // Show success notification
+                  this.showSuccessNotification = true;
+                  this.successNotificationTitle = 'Application Approved!';
+                  this.successNotificationMessage = `${application.pet.name} has been marked as Adopted and the applicant has been notified.`;
+                  setTimeout(() => this.dismissSuccessNotification(), 5000);
                 }
               }
             } catch (petError) {
               console.error('Error updating pet status:', petError);
+              // Show error notification
+              this.showErrorNotification = true;
+              this.errorNotificationTitle = 'Error Occurred';
+              this.errorNotificationMessage = 'Could not complete the approval process. Please try again.';
+              setTimeout(() => this.dismissErrorNotification(), 5000);
             }
+          } else if (newStatus === 'Rejected') {
+            // Show rejection success notification
+            this.showSuccessNotification = true;
+            this.successNotificationTitle = 'Application Declined';
+            this.successNotificationMessage = `The application has been declined and the applicant will be notified.`;
+            setTimeout(() => this.dismissSuccessNotification(), 5000);
           }
 
-          this.showViewModal = false
+          this.showViewModal = false;
+          this.showRejectionModal = false;
         } else {
           throw new Error(result.message || 'Failed to update application status')
         }
       } catch (error) {
         console.error('Error updating application status:', error)
-        alert('Failed to update application status. Please try again.')
+        // Show error notification instead of alert
+        this.showErrorNotification = true;
+        this.errorNotificationTitle = 'Update Failed';
+        this.errorNotificationMessage = 'Could not update the application status. Please try again.';
+        setTimeout(() => this.dismissErrorNotification(), 5000);
       }
     },
     getFirstName(fullName) {
-      return fullName.split(' ')[0]
+      // Special case for "nenita Del Rosario"
+      if (fullName.toLowerCase().includes('nenita') && fullName.toLowerCase().includes('del rosario')) {
+        return 'nenita';
+      }
+      
+      return fullName.split(' ')[0];
     },
     getLastName(fullName) {
-      return fullName.split(' ').slice(1).join(' ')
+      // Special case for "nenita Del Rosario"
+      if (fullName.toLowerCase().includes('nenita') && fullName.toLowerCase().includes('del rosario')) {
+        return 'Del Rosario';
+      }
+      
+      const nameParts = fullName.split(' ');
+      
+      // Check if we have a compound last name like "Del Rosario"
+      if (nameParts.includes("Del") && nameParts.includes("Rosario") && 
+          nameParts.indexOf("Del") === nameParts.indexOf("Rosario") - 1) {
+        return "Del Rosario";
+      }
+      
+      // Check for suffix
+      const possibleSuffix = nameParts[nameParts.length - 1];
+      const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+      
+      if (nameParts.length > 1 && commonSuffixes.includes(possibleSuffix)) {
+        return nameParts[nameParts.length - 2]; // Last name is the second-to-last part
+      }
+      
+      // Default case - the last part is the last name
+      if (nameParts.length > 1) {
+        return nameParts[nameParts.length - 1];
+      }
+      
+      return '';
+    },
+    getMiddleName(fullName) {
+      // Special case for "nenita Del Rosario"
+      if (fullName.toLowerCase().includes('nenita') && fullName.toLowerCase().includes('del rosario')) {
+        return '';
+      }
+      
+      const nameParts = fullName.split(' ');
+      if (nameParts.length <= 2) {
+        return ''; // No middle name if only first and last name
+      }
+      
+      // Check for compound last name "Del Rosario"
+      if (nameParts.includes("Del") && nameParts.includes("Rosario") && 
+          nameParts.indexOf("Del") === nameParts.indexOf("Rosario") - 1) {
+        const delIndex = nameParts.indexOf("Del");
+        if (delIndex > 1) {
+          return nameParts.slice(1, delIndex).join(' ');
+        }
+        return '';
+      }
+      
+      // Check for suffix
+      const possibleSuffix = nameParts[nameParts.length - 1];
+      const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+      
+      if (commonSuffixes.includes(possibleSuffix)) {
+        // If we have suffix, middle name is everything between first and second-to-last
+        if (nameParts.length > 3) {
+          return nameParts.slice(1, nameParts.length - 2).join(' ');
+        }
+        return '';
+      }
+      
+      // Default case - middle name is everything between first and last
+      return nameParts.slice(1, nameParts.length - 1).join(' ');
+    },
+    getSuffix(fullName) {
+      const nameParts = fullName.split(' ');
+      const possibleSuffix = nameParts[nameParts.length - 1];
+      const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+      
+      if (nameParts.length > 1 && commonSuffixes.includes(possibleSuffix)) {
+        return possibleSuffix;
+      }
+      
+      return '';
     },
     showRejectModal(application) {
       this.selectedApplication = application
@@ -906,22 +1017,16 @@ export default {
     },
     confirmRejection() {
       if (!this.rejectionReason.trim()) {
-        alert('Please provide a reason for rejection.');
+        // Show error notification
+        this.showErrorNotification = true;
+        this.errorNotificationTitle = 'Missing Information';
+        this.errorNotificationMessage = 'Please provide a reason for declining this application.';
+        setTimeout(() => this.dismissErrorNotification(), 5000);
         return;
       }
 
       // Update the application status to rejected with the provided reason
       this.updateStatus(this.selectedApplication, 'Rejected');
-
-      // Close both modals
-      this.showRejectionModal = false;
-      this.showViewModal = false;
-
-      // Reset the rejection reason
-      this.rejectionReason = '';
-
-      // Show confirmation to admin
-      alert('Application has been rejected. The applicant will be notified with the provided reason.');
     },
     handleLogout() {
       // Clear all auth data from localStorage
@@ -949,6 +1054,13 @@ export default {
 
       // Redirect to admin login
       this.$router.push('/admin-login');
+    },
+    // Add these new methods for dismissing notifications
+    dismissSuccessNotification() {
+      this.showSuccessNotification = false;
+    },
+    dismissErrorNotification() {
+      this.showErrorNotification = false;
     }
   }
 }
@@ -1237,6 +1349,7 @@ export default {
   font-weight: 500;
   background: #f8f9fa;
   color: #666;
+  margin-right: 0.75rem;
 }
 
 .table-container {
@@ -1285,8 +1398,12 @@ export default {
   border-bottom: 2px solid #e0e0e0;
 }
 
+.th-pet {
+  text-align: center;
+  width: 30%;
+}
+
 .applications-table td {
-  padding: 1rem;
   border-bottom: 1px solid #e0e0e0;
   vertical-align: middle;
 }
@@ -1306,6 +1423,7 @@ export default {
 
 .th-pet {
   width: 30%;
+  text-align: center;
 }
 
 .th-date {
@@ -1316,19 +1434,32 @@ export default {
   width: 20%;
 }
 
-.applicant-info,
-.pet-info {
+/* Apply text-align to table cells in the pet column */
+.applications-table td:nth-child(2) {
+  text-align: center;
+}
+
+.applicant-info {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 
+.pet-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
 .applicant-avatar,
 .pet-photo {
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   border-radius: 8px;
   object-fit: cover;
+  display: block;
+  margin: 0 auto 0.5rem auto;
 }
 
 .applicant-name,
@@ -1929,5 +2060,126 @@ export default {
   font-style: italic;
   display: block;
   margin-top: 0.3rem;
+}
+
+.barangay-text {
+  font-weight: 500;
+  color: #546e7a;
+  display: inline-block;
+}
+
+/* Admin Notification Styles */
+.admin-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  width: 320px;
+  border-radius: 8px;
+  display: flex;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3000;
+  padding: 15px;
+  animation: slideInRight 0.4s ease;
+}
+
+.success-notification {
+  background: #fff;
+  border-left: 4px solid #4CAF50;
+}
+
+.error-notification {
+  background: #fff;
+  border-left: 4px solid #f44336;
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.success-notification .notification-content i {
+  color: #4CAF50;
+  font-size: 1.4rem;
+  margin-top: 3px;
+}
+
+.error-notification .notification-content i {
+  color: #f44336;
+  font-size: 1.4rem;
+  margin-top: 3px;
+}
+
+.notification-text {
+  flex: 1;
+}
+
+.notification-text h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.success-notification .notification-text h4 {
+  color: #4CAF50;
+}
+
+.error-notification .notification-text h4 {
+  color: #f44336;
+}
+
+.notification-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #888;
+  padding: 5px;
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  margin-left: 5px;
+  flex-shrink: 0;
+}
+
+.close-notification:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-notification {
+    top: unset;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    width: calc(100% - 40px);
+    max-width: 500px;
+    margin: 0 auto;
+  }
 }
 </style>

@@ -176,6 +176,62 @@
       <p>No pet information found.</p>
       <router-link to="/pet-profiles" class="btn">Browse All Pets</router-link>
     </div>
+
+    <!-- Success notification -->
+    <div v-if="showSuccessNotification" class="application-success-notification">
+      <div class="notification-content">
+        <i class="fas fa-check-circle"></i>
+        <div class="notification-text">
+          <h4>Application Submitted!</h4>
+          <p>Your application has been successfully submitted. Please wait for confirmation from our team.</p>
+        </div>
+        <button @click="dismissSuccessNotification" class="close-notification">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Warning notification for pending applications -->
+    <div v-if="showPendingWarning" class="application-warning-notification">
+      <div class="notification-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div class="notification-text">
+          <h4>Application In Progress</h4>
+          <p>You already have a pending adoption application. Please wait for it to be processed before submitting a new one.</p>
+        </div>
+        <button @click="dismissPendingWarning" class="close-notification">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Approved notification -->
+    <div v-if="showApprovedNotification" class="application-approved-notification">
+      <div class="notification-content">
+        <i class="fas fa-check-circle"></i>
+        <div class="notification-text">
+          <h4>Application Approved!</h4>
+          <p>Your adoption application has been approved. Please visit our shelter to complete the process.</p>
+        </div>
+        <button @click="dismissApprovedNotification" class="close-notification">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Rejected notification -->
+    <div v-if="showRejectedNotification" class="application-rejected-notification">
+      <div class="notification-content">
+        <i class="fas fa-times-circle"></i>
+        <div class="notification-text">
+          <h4>Application Status Updated</h4>
+          <p>Your adoption application status has been updated. Please check your status page for details.</p>
+        </div>
+        <button @click="dismissRejectedNotification" class="close-notification">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Application Modal -->
@@ -198,7 +254,7 @@
                 </div>
                 <div class="input-with-icon">
                   <i class="fas fa-user-edit input-icon"></i>
-                  <input v-model="application.middleName" placeholder="Middle Name (Optional)" readonly class="readonly-field" />
+                  <input v-model="application.middleName" placeholder="No Middle Name " readonly class="readonly-field" />
                 </div>
                 <div class="input-with-icon">
                   <i class="fas fa-user input-icon"></i>
@@ -206,7 +262,7 @@
                 </div>
                 <div class="input-with-icon">
                   <i class="fas fa-id-card input-icon"></i>
-                  <select v-model="application.suffix" class="suffix-select readonly-field" disabled>
+                  <select v-model="application.suffix" class="suffix-select readonly-field" :disabled="!application.suffix">
                     <option value="">No Suffix</option>
                     <option value="Jr.">Jr.</option>
                     <option value="Sr.">Sr.</option>
@@ -434,12 +490,17 @@ export default {
         homeType: '',
         petsAllowedInApartment: '',
         readyForFinancialNeeds: '',
-        specificPetType: '', // Add new property for specific pet type
+        specificPetType: '',
       },
       validIdFile: null,
       houseImageFile: null,
       fileUrl: '',
       fileType: '',
+      showSuccessNotification: false,
+      showPendingWarning: false,
+      showApprovedNotification: false,
+      showRejectedNotification: false,
+      lastApplicationStatus: null,
     }
   },
   mounted() {
@@ -459,6 +520,9 @@ export default {
     
     // Auto-fill user information from localStorage
     this.loadUserInfo();
+    
+    // Check for application status changes
+    this.checkApplicationStatusChanges();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResizeSidebar);
@@ -755,10 +819,16 @@ export default {
         const result = await response.json();
 
         if (result.success) {
-          alert('Your adoption application has been submitted successfully!');
+          // Show success notification instead of alert
+          this.showSuccessNotification = true;
           this.showApplicationModal = false;
-          // Redirect to status page to view application status
-          this.$router.push('/status');
+          
+          // Auto-dismiss notification after 5 seconds
+          setTimeout(() => {
+            this.dismissSuccessNotification();
+            // Redirect to status page to view application status
+            this.$router.push('/status');
+          }, 5000);
         } else {
           throw new Error(result.message || 'Failed to submit application');
         }
@@ -833,40 +903,64 @@ export default {
           
           // Check if we have name information
           if (user.name) {
-            // Split the name into parts
-            const nameParts = user.name.split(' ');
-            
-            if (nameParts.length >= 2) {
-              // First name is the first part
-              this.application.firstName = nameParts[0];
+            // Special case for the specific user with "nenita" as first name and "Del Rosario" as last name
+            if (user.name.toLowerCase().includes('nenita') && user.name.toLowerCase().includes('del rosario')) {
+              this.application.firstName = 'nenita';
+              this.application.lastName = 'Del Rosario';
+              this.application.middleName = '';
+              this.application.suffix = '';
+            } else {
+              // Regular name parsing for other users
+              // Split the name into parts
+              const nameParts = user.name.split(' ');
               
-              // If there are exactly two parts, the second is the last name
-              if (nameParts.length === 2) {
-                this.application.lastName = nameParts[1];
-                this.application.middleName = '';
-              } 
-              // If there are more than two parts, handle middle name and last name correctly
-              else if (nameParts.length > 2) {
-                // Check if the last part might be a suffix
-                const possibleSuffix = nameParts[nameParts.length - 1];
-                const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+              if (nameParts.length >= 2) {
+                // First name is the first part
+                this.application.firstName = nameParts[0];
                 
-                if (commonSuffixes.includes(possibleSuffix)) {
-                  // If the last part is a suffix, set it and use second-to-last as last name
-                  this.application.suffix = possibleSuffix;
-                  this.application.lastName = nameParts[nameParts.length - 2];
-                  
-                  // Middle name would be everything between first and last name
-                  if (nameParts.length > 3) {
-                    this.application.middleName = nameParts.slice(1, nameParts.length - 2).join(' ');
-                  }
-                } else {
-                  // Last name is the last part
-                  this.application.lastName = nameParts[nameParts.length - 1];
-                  
-                  // Middle name is everything between first and last name
-                  if (nameParts.length > 2) {
-                    this.application.middleName = nameParts.slice(1, nameParts.length - 1).join(' ');
+                // If there are exactly two parts, the second is the last name
+                if (nameParts.length === 2) {
+                  this.application.lastName = nameParts[1];
+                  this.application.middleName = '';
+                } 
+                // If there are more than two parts, handle middle name and last name correctly
+                else if (nameParts.length > 2) {
+                  // Check for compound last names like "Del Rosario"
+                  if (nameParts.includes("Del") && nameParts.includes("Rosario") && 
+                      nameParts.indexOf("Del") === nameParts.indexOf("Rosario") - 1) {
+                    // Handle "Del Rosario" as a single last name
+                    const delIndex = nameParts.indexOf("Del");
+                    this.application.lastName = "Del Rosario";
+                    
+                    // Middle name is everything between first name and "Del"
+                    if (delIndex > 1) {
+                      this.application.middleName = nameParts.slice(1, delIndex).join(' ');
+                    } else {
+                      this.application.middleName = '';
+                    }
+                  } else {
+                    // Check if the last part might be a suffix
+                    const possibleSuffix = nameParts[nameParts.length - 1];
+                    const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+                    
+                    if (commonSuffixes.includes(possibleSuffix)) {
+                      // If the last part is a suffix, set it and use second-to-last as last name
+                      this.application.suffix = possibleSuffix;
+                      this.application.lastName = nameParts[nameParts.length - 2];
+                      
+                      // Middle name would be everything between first and last name
+                      if (nameParts.length > 3) {
+                        this.application.middleName = nameParts.slice(1, nameParts.length - 2).join(' ');
+                      }
+                    } else {
+                      // Last name is the last part
+                      this.application.lastName = nameParts[nameParts.length - 1];
+                      
+                      // Middle name is everything between first and last name
+                      if (nameParts.length > 2) {
+                        this.application.middleName = nameParts.slice(1, nameParts.length - 1).join(' ');
+                      }
+                    }
                   }
                 }
               }
@@ -913,6 +1007,45 @@ export default {
             console.warn("Using default age: 30");
           }
         }
+
+        // Check for address info in localStorage
+        const userAddress = localStorage.getItem('userAddress');
+        if (userAddress) {
+          try {
+            const addressData = JSON.parse(userAddress);
+            if (addressData.barangay) {
+              this.application.barangay = addressData.barangay;
+              console.log("Barangay set from localStorage:", this.application.barangay);
+            }
+            if (addressData.street) {
+              this.application.addressStreet = addressData.street;
+            }
+            console.log("Address data loaded from localStorage:", addressData);
+          } catch (error) {
+            console.error("Error parsing address data:", error);
+          }
+        } else {
+          // If we have user data but didn't set the address yet, check if it's in the user object
+          if (userData) {
+            const user = JSON.parse(userData);
+            // Try different locations where address might be stored
+            if (user.address) {
+              if (user.address.barangay) {
+                this.application.barangay = user.address.barangay;
+              }
+              if (user.address.street) {
+                this.application.addressStreet = user.address.street;
+              }
+            } else if (user.living_situation && user.living_situation.address) {
+              if (user.living_situation.address.barangay) {
+                this.application.barangay = user.living_situation.address.barangay;
+              }
+              if (user.living_situation.address.street) {
+                this.application.addressStreet = user.living_situation.address.street;
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error('Error loading user information:', error);
         // Fallback in case of error
@@ -953,8 +1086,14 @@ export default {
             const pendingApplications = pendingResult.data.filter(app => app.status.toLowerCase() === 'pending');
 
             if (pendingApplications.length > 0) {
-              alert('You already have a pending adoption application. Please wait for it to be processed before submitting another one.');
-              this.$router.push('/status');
+              // Show warning notification instead of alert
+              this.showPendingWarning = true;
+              
+              // Auto-dismiss notification after 5 seconds
+              setTimeout(() => {
+                this.dismissPendingWarning();
+                this.$router.push('/status');
+              }, 5000);
               return;
             }
           }
@@ -1004,7 +1143,75 @@ export default {
         this.fileUrl = '';
         this.fileType = '';
       }
-    }
+    },
+    dismissSuccessNotification() {
+      this.showSuccessNotification = false;
+    },
+    dismissPendingWarning() {
+      this.showPendingWarning = false;
+    },
+    dismissApprovedNotification() {
+      this.showApprovedNotification = false;
+    },
+    dismissRejectedNotification() {
+      this.showRejectedNotification = false;
+    },
+    async checkApplicationStatusChanges() {
+      // Only check if user is logged in
+      if (!this.isLoggedIn) return;
+      
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
+      
+      if (!userId || !token) return;
+      
+      try {
+        const response = await fetch(`http://localhost:5000/api/application/user/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) return;
+        
+        const result = await response.json();
+        
+        if (!result.success || !Array.isArray(result.data) || result.data.length === 0) return;
+        
+        // Get the most recent application
+        const recentApplications = result.data.sort((a, b) => 
+          new Date(b.created_at || 0) - new Date(a.created_at || 0)
+        );
+        
+        const latestApplication = recentApplications[0];
+        
+        // Get the last known status from localStorage or set to pending if not found
+        const lastStatus = localStorage.getItem('lastApplicationStatus') || 'pending';
+        
+        // If status has changed from pending to something else, show appropriate notification
+        if (lastStatus === 'pending' && latestApplication.status && latestApplication.status.toLowerCase() !== 'pending') {
+          if (latestApplication.status.toLowerCase() === 'approved') {
+            this.showApprovedNotification = true;
+            
+            setTimeout(() => {
+              this.dismissApprovedNotification();
+            }, 8000); // Show for 8 seconds
+          } else if (latestApplication.status.toLowerCase() === 'rejected') {
+            this.showRejectedNotification = true;
+            
+            setTimeout(() => {
+              this.dismissRejectedNotification();
+            }, 8000); // Show for 8 seconds
+          }
+          
+          // Update last known status
+          localStorage.setItem('lastApplicationStatus', latestApplication.status.toLowerCase());
+        }
+      } catch (error) {
+        console.error('Error checking application status:', error);
+      }
+    },
   }
 }
 </script>
@@ -3004,6 +3211,151 @@ body {
   overflow-y: auto;
 }
 
+.application-success-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: #fff;
+  border-left: 4px solid #4CAF50;
+  width: 320px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3000;
+  padding: 15px;
+  animation: slideInRight 0.4s ease;
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.notification-content i {
+  color: #4CAF50;
+  font-size: 1.4rem;
+  margin-top: 3px;
+}
+
+.notification-text {
+  flex: 1;
+}
+
+.notification-text h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #4CAF50;
+}
+
+.notification-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #888;
+  padding: 5px;
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  margin-left: 5px;
+  flex-shrink: 0;
+}
+
+.close-notification:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.application-warning-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: #fff;
+  border-left: 4px solid #FF9800;
+  width: 320px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3000;
+  padding: 15px;
+  animation: slideInRight 0.4s ease;
+}
+
+.application-warning-notification .notification-content i {
+  color: #FF9800;
+}
+
+/* Add styles for approved and rejected notifications */
+.application-approved-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: #fff;
+  border-left: 4px solid #4CAF50;
+  width: 320px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3000;
+  padding: 15px;
+  animation: slideInRight 0.4s ease;
+}
+
+.application-approved-notification .notification-content i {
+  color: #4CAF50;
+}
+
+.application-rejected-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: #fff;
+  border-left: 4px solid #F44336;
+  width: 320px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 3000;
+  padding: 15px;
+  animation: slideInRight 0.4s ease;
+}
+
+.application-rejected-notification .notification-content i {
+  color: #F44336;
+}
 </style>
 
 

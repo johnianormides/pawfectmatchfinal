@@ -105,6 +105,38 @@
 
     <!-- Pet Profiles Container -->
     <div class="pet-profiles-container">
+      <!-- Notification for non-logged in users -->
+      <div v-if="showLoginNotification" class="pet-adoption-notification">
+        <div class="notification-content">
+          <i class="fas fa-info-circle"></i>
+          <div class="notification-text">
+            <h4>Account Required</h4>
+            <p>You need to have an account to adopt a pet. Please login or register.</p>
+          </div>
+          <button @click="dismissNotification" class="close-notification">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="notification-actions">
+          <router-link to="/login" class="notification-btn login-btn">Login</router-link>
+          <router-link to="/signup" class="notification-btn signup-btn">Register</router-link>
+        </div>
+      </div>
+      
+      <!-- Success Notification for application submission -->
+      <div v-if="showSuccessNotification" class="pet-adoption-notification success-notification">
+        <div class="notification-content">
+          <i class="fas fa-check-circle"></i>
+          <div class="notification-text">
+            <h4>Application Submitted!</h4>
+            <p>Your application has been successfully submitted. Please wait for confirmation from our team.</p>
+          </div>
+          <button @click="dismissSuccessNotification" class="close-notification">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      
       <div class="pet-profiles-header">
         <h1>Find Your Perfect Companion</h1>
         <p class="subtitle">Browse our available pets looking for their forever homes</p>
@@ -191,7 +223,7 @@
                 <span><i class="fas" :class="pet.gender === 'Male' ? 'fa-mars' : 'fa-venus'"></i> {{ pet.gender }}</span>
               </div>
               <p class="pet-desc">{{ truncateDescription(pet.description) }}</p>
-              <button class="meet-pet-btn">
+              <button class="meet-pet-btn" @click.stop="meetPet(pet)">
                 Meet {{ pet.name }}
               </button>
             </div>
@@ -290,7 +322,9 @@ export default {
       currentPage: 1,
       totalPages: 1,
       paginationStart: 0,
-      paginationEnd: 0
+      paginationEnd: 0,
+      showLoginNotification: false,
+      showSuccessNotification: false
     };
   },
   computed: {
@@ -467,9 +501,8 @@ export default {
         this.sidebarOpen = false;
         this.closeAllDropdowns();
       } else {
-        // Show message and redirect to login page
-        alert('You need to log in or sign up to view pet details!');
-        this.$router.push('/login');
+        // Show notification instead of alert
+        this.showLoginNotification = true;
       }
     },
     closeAllDropdowns() {
@@ -586,6 +619,26 @@ export default {
       this.currentPage = newPage;
       this.paginationStart = (this.currentPage - 1) * 8;
       this.paginationEnd = Math.min(this.paginationStart + 8, this.filteredPets.length);
+    },
+    dismissNotification() {
+      this.showLoginNotification = false;
+    },
+    showApplicationSuccess() {
+      this.showSuccessNotification = true;
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => {
+        this.showSuccessNotification = false;
+      }, 5000);
+    },
+    dismissSuccessNotification() {
+      this.showSuccessNotification = false;
+    },
+    meetPet(pet) {
+      if (this.isLoggedIn) {
+        this.viewPetProfile(pet.id);
+      } else {
+        this.showLoginNotification = true;
+      }
     }
   },
 };
@@ -1724,5 +1777,154 @@ export default {
   font-size: 0.8rem;
   color: #999;
   font-weight: normal;
+}
+
+/* Notification Styles */
+.pet-adoption-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  width: 280px;
+  padding: 1.2rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 1010;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: slideInRight 0.4s ease;
+  border-left: 4px solid #f7871f;
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.notification-content i {
+  color: #f7871f;
+  font-size: 1.4rem;
+  margin-top: 0.2rem;
+}
+
+.notification-text {
+  flex: 1;
+}
+
+.notification-text h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.notification-text p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #666;
+  padding: 5px;
+  border-radius: 50%;
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.close-notification:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.notification-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.notification-btn {
+  flex: 1;
+  background-color: #f7871f;
+  color: white;
+  padding: 0.7rem 0.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+}
+
+.login-btn {
+  background-color: #f7871f;
+}
+
+.signup-btn {
+  background-color: #fff;
+  border: 2px solid #f7871f;
+  color: #f7871f;
+}
+
+.notification-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.login-btn:hover {
+  background-color: #e67012;
+}
+
+.signup-btn:hover {
+  background-color: #fff7f0;
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .pet-adoption-notification {
+    top: unset;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    width: calc(100% - 40px);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+/* Success Notification Styles */
+.success-notification {
+  border-left: 4px solid #4CAF50;
+}
+
+.success-notification i {
+  color: #4CAF50;
+}
+
+.success-notification h4 {
+  color: #4CAF50;
 }
 </style>

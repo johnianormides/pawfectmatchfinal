@@ -90,8 +90,6 @@
                     <option value="">Select type</option>
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
-                    <option value="Bird">Bird</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
@@ -107,7 +105,7 @@
               </div>
               <div class="form-row">
                 <div class="form-group">
-                  <label for="gender">Sex <span class="required">*</span></label>
+                  <label for="gender">Gender <span class="required">*</span></label>
                   <select id="gender" v-model="petData.gender" required>
                     <option value="">Select gender</option>
                     <option value="Male">Male</option>
@@ -175,21 +173,9 @@ export default {
   async created() {
     // Check if admin is authenticated
     const adminSession = localStorage.getItem('adminSession')
-    const adminUser = localStorage.getItem('adminUser')
+    const userRole = localStorage.getItem('userRole')
 
-    if (!adminSession || !adminUser) {
-      this.$router.push('/admin-login')
-      return
-    }
-
-    try {
-      const user = JSON.parse(adminUser)
-      if (user.role !== 'admin') {
-        this.$router.push('/admin-login')
-        return
-      }
-    } catch (error) {
-      console.error('Error checking admin status:', error)
+    if (!adminSession || userRole !== 'admin') {
       this.$router.push('/admin-login')
       return
     }
@@ -352,7 +338,11 @@ export default {
         const result = await response.json()
 
         if (result.success) {
-        alert('Pet added successfully!')
+        // Store information about the added pet for notification
+        localStorage.setItem('newPetAdded', JSON.stringify({
+          name: this.petData.name,
+          timestamp: new Date().getTime()
+        }))
         this.$router.push('/admin/pets')
         } else {
           throw new Error(result.message || 'Failed to add pet')

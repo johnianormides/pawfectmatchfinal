@@ -2,8 +2,8 @@
   <div class="admin-layout">
     <!-- Status Change Notification -->
     <div v-if="showNotification" class="status-notification">
-      <div class="notification-content">
-        <i class="fas fa-info-circle"></i>
+      <div class="notification-content" :class="{ 'success-notification': isNewPetNotification }">
+        <i class="fas" :class="isNewPetNotification ? 'fa-check-circle' : 'fa-info-circle'"></i>
         <span>{{ notificationMessage }}</span>
         <button class="close-notification" @click="showNotification = false">&times;</button>
       </div>
@@ -63,45 +63,7 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-paw"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ filteredPets.length }}</p>
-              <p class="stat-label">Total Pets</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon available">
-              <i class="fas fa-home"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ availablePetsCount }}</p>
-              <p class="stat-label">Available</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon on-hold">
-              <i class="fas fa-pause-circle"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ onHoldPetsCount }}</p>
-              <p class="stat-label">On Hold</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon adopted">
-              <i class="fas fa-heart"></i>
-            </div>
-            <div class="stat-info">
-              <p class="stat-value">{{ adoptedPetsCount }}</p>
-              <p class="stat-label">Adopted</p>
-            </div>
-          </div>
-        </div>
+      
 
         <!-- Filters -->
         <div class="filter-section">
@@ -235,7 +197,8 @@ export default {
       isRefreshing: false,
       showNotification: false,
       notificationMessage: '',
-      previousPetStatuses: {} // To track status changes
+      previousPetStatuses: {}, // To track status changes
+      isNewPetNotification: false
     }
   },
   computed: {
@@ -264,6 +227,7 @@ export default {
   },
   mounted() {
     this.fetchPets()
+    this.checkForNewPetNotification()
   },
   activated() {
     console.log('Pets component activated - refreshing data')
@@ -302,6 +266,31 @@ export default {
 
       // Redirect to admin login
       this.$router.push('/admin-login');
+    },
+    checkForNewPetNotification() {
+      const newPetData = localStorage.getItem('newPetAdded');
+      if (newPetData) {
+        try {
+          const petInfo = JSON.parse(newPetData);
+          // Check if notification is recent (within last 5 seconds)
+          const now = new Date().getTime();
+          if (now - petInfo.timestamp < 5000) {
+            this.notificationMessage = `Pet "${petInfo.name}" has been added successfully!`;
+            this.isNewPetNotification = true;
+            this.showNotification = true;
+            
+            // Auto-hide notification after 5 seconds
+            setTimeout(() => {
+              this.showNotification = false;
+            }, 5000);
+          }
+          // Remove the notification data
+          localStorage.removeItem('newPetAdded');
+        } catch (error) {
+          console.error('Error parsing new pet notification data:', error);
+          localStorage.removeItem('newPetAdded');
+        }
+      }
     },
     async forceFetchPets() {
       this.pets = []
@@ -1087,5 +1076,16 @@ export default {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* Success notification styling */
+.notification-content.success-notification {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-left: 4px solid #4caf50;
+}
+
+.notification-content.success-notification i {
+  color: #4caf50;
 }
 </style>

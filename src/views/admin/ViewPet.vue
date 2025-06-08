@@ -52,21 +52,27 @@
       </header>
 
       <div class="content-wrapper">
+        <!-- Loading State -->
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
           <p>Loading pet details...</p>
         </div>
 
+        <!-- Error State -->
         <div v-else-if="error" class="error-container">
           <i class="fas fa-exclamation-triangle"></i>
           <p>{{ error }}</p>
           <router-link to="/admin/pets" class="return-link">Return to Pets List</router-link>
         </div>
 
-        <div v-else-if="pet" class="pet-profile">
-          <div class="profile-header">
-            <div class="pet-image-wrapper">
-              <img :src="pet.photoUrl || '/Img/default-pet.jpg'" :alt="pet.name" class="pet-image">
+        <!-- Pet Details -->
+        <div v-else-if="pet" class="modern-pet-profile">
+          <div class="profile-container">
+            <!-- Left Column - Photo -->
+            <div class="photo-section">
+              <div class="photo-container">
+                <img :src="pet.photoUrl || '/Img/default-pet.jpg'" :alt="pet.name" class="pet-image">
+              </div>
               <input
                 type="file"
                 ref="photoInput"
@@ -74,64 +80,73 @@
                 accept="image/*"
                 class="hidden-input"
               >
-
+              <button @click="triggerPhotoInput" class="photo-btn">
+                <i class="fas fa-camera"></i> Change Photo
+              </button>
             </div>
-            <div class="pet-info">
-              <div class="pet-name-status">
-                <h2>{{ pet.name }}</h2>
-                <span class="status-badge" :class="getStatusClass(pet.status)">
+            
+            <!-- Right Column - Info -->
+            <div class="info-section">
+              <div class="pet-name-row">
+                <h2 class="pet-name">{{ pet.name }}</h2>
+                <div class="status-indicator" :class="getStatusClass(pet.status)">
                   {{ pet.status }}
-                </span>
+                </div>
               </div>
-              <div class="pet-attributes">
-                <div class="attribute">
+              
+              <div class="attribute-cards">
+                <div class="attribute-card">
                   <i class="fas fa-paw"></i>
-                  <span>{{ pet.type }}</span>
+                  <div>
+                    <span class="attribute-label">Type</span>
+                    <span class="attribute-value">{{ pet.type }}</span>
+                  </div>
                 </div>
-                <div class="attribute">
+                <div class="attribute-card">
                   <i class="fas fa-dog"></i>
-                  <span>{{ pet.breed }}</span>
+                  <div>
+                    <span class="attribute-label">Breed</span>
+                    <span class="attribute-value">{{ pet.breed }}</span>
+                  </div>
                 </div>
-                <div class="attribute">
+                <div class="attribute-card">
                   <i class="fas fa-birthday-cake"></i>
-                  <span>{{ pet.age }}</span>
+                  <div>
+                    <span class="attribute-label">Age</span>
+                    <span class="attribute-value">{{ pet.age }}</span>
+                  </div>
                 </div>
-                <div class="attribute">
+                <div class="attribute-card">
                   <i class="fas fa-venus-mars"></i>
-                  <span>{{ pet.gender }}</span>
+                  <div>
+                    <span class="attribute-label">Gender</span>
+                    <span class="attribute-value">{{ pet.gender }}</span>
+                  </div>
                 </div>
               </div>
-              <div class="pet-description">
+              
+              <!-- Description Section -->
+              <div class="description-inline">
                 <h3><i class="fas fa-info-circle"></i> About {{ pet.name }}</h3>
-                <p class="info-text">{{ pet.description || 'No description available.' }}</p>
+                <p>{{ pet.description || 'No description available.' }}</p>
               </div>
-              <div class="quick-actions">
+              
+              <div class="action-buttons">
                 <button @click="editPet" class="primary-btn">
                   <i class="fas fa-edit"></i> Edit Details
                 </button>
                 <button @click="confirmDelete" class="danger-btn">
                   <i class="fas fa-trash"></i> Delete
                 </button>
-                <button @click="changeStatus('On Hold')" v-if="pet.status !== 'On Hold'" class="status-btn-small hold">
+                <button @click="changeStatus('On Hold')" v-if="pet.status !== 'On Hold'" class="status-btn hold">
                   <i class="fas fa-pause-circle"></i> Put on Hold
                 </button>
-                <button @click="changeStatus('Adopted')" v-if="pet.status !== 'Adopted'" class="status-btn-small adopted">
+                <button @click="changeStatus('Adopted')" v-if="pet.status !== 'Adopted'" class="status-btn adopted">
                   <i class="fas fa-home"></i> Mark as Adopted
                 </button>
               </div>
             </div>
           </div>
-
-          <!-- <div class="info-tabs">
-            <div class="tab-container">
-              <div class="tab-content">
-                <div class="info-section">
-                  <h3><i class="fas fa-info-circle"></i> About {{ pet.name }}</h3>
-                  <p class="info-text">{{ pet.description || 'No description available.' }}</p>
-                </div>
-              </div>
-            </div>
-          </div> -->
         </div>
 
         <!-- Delete Confirmation Modal -->
@@ -337,11 +352,14 @@ export default {
 
       try {
         const formData = new FormData()
-        formData.append('photo', file)
+        formData.append('profile_image', file)
 
         const response = await fetch(`http://localhost:5000/api/pet/${this.petId}/photo`, {
           method: 'PUT',
-          body: formData
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         })
 
         if (!response.ok) {
@@ -384,6 +402,7 @@ export default {
   left: 0;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-header {
@@ -461,7 +480,7 @@ export default {
 
 .admin-header {
   background: #fff;
-  padding: 1rem 1rem;
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -479,6 +498,7 @@ export default {
   font-size: 1.5rem;
   color: #333;
   margin: 0;
+  font-weight: 600;
 }
 
 .back-link {
@@ -502,7 +522,7 @@ export default {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .admin-profile {
@@ -524,7 +544,7 @@ export default {
 }
 
 .content-wrapper {
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -569,176 +589,214 @@ export default {
   font-weight: 500;
 }
 
-/* Pet Profile Styling */
-.pet-profile {
+/* Modern Pet Profile Styling */
+.modern-pet-profile {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
 }
 
-.profile-header {
+.profile-container {
   display: flex;
-  background: #fff;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  height: calc(100vh - 130px);
+  max-height: 700px;
 }
 
-.pet-image-wrapper {
-  width: 280px;
-  height: auto;
-  flex-shrink: 0;
-  overflow: visible;
-  position: relative;
+.photo-section {
+  width: 300px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 1.2rem;
   align-items: center;
+  border-right: 1px solid #f0f0f0;
+}
+
+.photo-container {
+  width: 100%;
+  height: 280px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .pet-image {
-  width: calc(100% - 2rem);
-  height: 280px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+}
+
+.photo-btn {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: #f7871f;
+  color: white;
+  border: none;
   border-radius: 8px;
-  margin: 0 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.photo-btn:hover {
+  background: #e67012;
 }
 
 .hidden-input {
   display: none;
 }
 
-.change-photo-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.8rem 1rem;
-  background: #f7871f;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background 0.2s;
-  width: 100%;
-}
-
-.change-photo-btn:hover {
-  background: #e67012;
-}
-
-.change-photo-btn i {
-  margin-right: 0.5rem;
-}
-
-.pet-info {
+.info-section {
   flex: 1;
-  padding: 2rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
 }
 
-.pet-name-status {
+.pet-name-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
   margin-bottom: 0.5rem;
+  border-bottom: 2px solid #f7871f;
+  padding-bottom: 0.5rem;
 }
 
-.pet-name-status h2 {
+.pet-name {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #333;
   margin: 0;
-}
-
-.status-badge {
   display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 30px;
-  font-weight: 500;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.status-indicator {
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 600;
   font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
-.status-available {
-  background: #e8f5e9;
-  color: #2e7d32;
+.status-indicator.status-available {
+  background: linear-gradient(135deg, #43a047, #2e7d32);
+  color: white;
 }
 
-.status-hold {
-  background: #fff3e0;
-  color: #e65100;
+.status-indicator.status-hold {
+  background: linear-gradient(135deg, #ff9800, #e65100);
+  color: white;
 }
 
-.status-adopted {
-  background: #e3f2fd;
-  color: #0d47a1;
+.status-indicator.status-adopted {
+  background: linear-gradient(135deg, #2196f3, #0d47a1);
+  color: white;
 }
 
-.status-unknown {
-  background: #f5f5f5;
-  color: #757575;
+.status-indicator.status-unknown {
+  background: linear-gradient(135deg, #9e9e9e, #616161);
+  color: white;
 }
 
-.pet-attributes {
-  display: flex;
-  flex-wrap: wrap;
+.attribute-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 1rem;
   margin-bottom: 0.5rem;
 }
 
-.attribute {
+.attribute-card {
   display: flex;
   align-items: center;
-  background: #f8f9fa;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-size: 1rem;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  background: #f9f9f9;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.attribute i {
-  margin-right: 0.8rem;
+.attribute-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.attribute-card i {
+  font-size: 1.5rem;
   color: #f7871f;
+  width: 24px;
+  text-align: center;
+}
+
+.attribute-card div {
+  display: flex;
+  flex-direction: column;
+}
+
+.attribute-label {
+  font-size: 0.85rem;
+  color: #777;
+  font-weight: 500;
+}
+
+.attribute-value {
   font-size: 1.1rem;
-}
-
-.pet-description {
-  margin: 1.5rem 0;
-}
-
-.pet-description h3 {
-  font-size: 1.2rem;
   font-weight: 600;
   color: #333;
-  margin: 0 0 0.8rem 0;
-  display: flex;
-  align-items: center;
 }
 
-.pet-description h3 i {
-  margin-right: 0.8rem;
+.description-inline {
+  margin: 0.5rem 0 1rem 0;
+}
+
+.description-inline h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.description-inline h3 i {
   color: #f7871f;
 }
 
-.pet-description .info-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #555;
+.description-inline p {
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #444;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: justify;
 }
 
-.quick-actions {
+.action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.8rem;
   margin-top: auto;
-  flex-wrap: wrap;
-  align-items: center;
 }
 
-.primary-btn, .danger-btn {
+.primary-btn, .danger-btn, .status-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -769,162 +827,9 @@ export default {
   background: #ffcdd2;
 }
 
-.primary-btn i, .danger-btn i {
-  margin-right: 0.6rem;
-}
-
-.status-btn-small {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.status-btn-small i {
-  margin-right: 0.4rem;
-  font-size: 0.9rem;
-}
-
-.status-btn-small.hold {
-  background: #fff3e0;
-  color: #e65100;
-}
-
-.status-btn-small.hold:hover {
-  background: #ffe0b2;
-}
-
-.status-btn-small.adopted {
-  background: #e3f2fd;
-  color: #0d47a1;
-}
-
-.status-btn-small.adopted:hover {
-  background: #bbdefb;
-}
-
-/* Info Tabs Styling */
-.info-tabs {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  overflow: hidden;
-}
-
-.tab-container {
-  padding: 1.5rem;
-}
-
-.info-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.info-section:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.info-section h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-}
-
-.info-section h3 i {
-  margin-right: 0.8rem;
-  color: #f7871f;
-}
-
-.info-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #555;
-  margin: 0;
-}
-
-.health-indicators {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-}
-
-.health-indicator {
-  display: flex;
-  align-items: center;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  background: #f5f5f5;
-  color: #757575;
-  font-size: 0.95rem;
-}
-
-.health-indicator.active {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.health-indicator i {
-  margin-right: 0.6rem;
-}
-
-/* Status Actions Styling */
-.status-actions {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  padding: 1.5rem;
-}
-
-.status-actions h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 1.2rem 0;
-}
-
-.status-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
 .status-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.status-btn i {
-  margin-right: 0.6rem;
-}
-
-.status-btn.available {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-btn.available:hover {
-  background: #c8e6c9;
+  background: #f8f9fa;
+  color: #555;
 }
 
 .status-btn.hold {
@@ -945,6 +850,11 @@ export default {
   background: #bbdefb;
 }
 
+.primary-btn i, .danger-btn i, .status-btn i {
+  margin-right: 0.6rem;
+  font-size: 1rem;
+}
+
 /* Modal Styling */
 .modal-overlay {
   position: fixed;
@@ -952,19 +862,20 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(3px);
 }
 
 .modal {
   background: #fff;
   border-radius: 12px;
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  max-width: 480px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   overflow: hidden;
 }
 
@@ -979,7 +890,8 @@ export default {
 .modal-header h3 {
   margin: 0;
   color: #333;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .close-btn {
@@ -1000,25 +912,26 @@ export default {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1.8rem 1.5rem;
   text-align: center;
 }
 
 .warning-icon {
-  font-size: 3rem;
+  font-size: 3.5rem;
   color: #f44336;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .modal-body p {
   margin: 0 0 0.8rem 0;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: #333;
 }
 
 .warning-text {
   color: #f44336;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .modal-actions {
@@ -1030,7 +943,7 @@ export default {
 }
 
 .cancel-btn, .delete-btn {
-  padding: 0.8rem 1.5rem;
+  padding: 0.8rem 1.8rem;
   border-radius: 8px;
   font-weight: 500;
   font-size: 1rem;
@@ -1058,22 +971,31 @@ export default {
   background: #d32f2f;
 }
 
+/* Responsive Styles */
 @media (max-width: 992px) {
-  .profile-header {
+  .profile-container {
     flex-direction: column;
+    height: auto;
+    max-height: none;
   }
 
-  .pet-image-wrapper {
+  .photo-section {
     width: 100%;
-    height: 240px;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
   }
 
-  .pet-info {
-    padding: 1.5rem;
+  .photo-container {
+    max-width: 280px;
+    height: 280px;
+  }
+  
+  .photo-btn {
+    max-width: 280px;
   }
 
-  .pet-description {
-    margin: 1.2rem 0;
+  .info-section {
+    max-height: 500px;
   }
 }
 
@@ -1081,53 +1003,83 @@ export default {
   .admin-sidebar {
     width: 70px;
   }
+  
   .sidebar-header {
     padding: 1rem;
   }
+  
   .logo-text {
     display: none;
   }
+  
   .nav-item span {
     display: none;
   }
+  
   .nav-item {
     justify-content: center;
     padding: 1rem;
   }
+  
   .admin-main {
     margin-left: 70px;
   }
+  
   .admin-header {
     left: 70px;
+    padding: 1rem;
   }
+  
+  .status-indicator {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
   .content-wrapper {
-    padding: 1.5rem 1rem;
+    padding: 1rem;
   }
-  .pet-name-status {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.8rem;
+  
+  .attribute-cards {
+    grid-template-columns: 1fr 1fr;
   }
-  .quick-actions {
-    flex-direction: column;
-  }
-  .status-buttons {
-    flex-direction: column;
+  
+  .action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 576px) {
-  .pet-attributes {
-    flex-direction: column;
+  .attribute-cards {
+    grid-template-columns: 1fr;
   }
-  .health-indicators {
-    flex-direction: column;
-  }
+  
   .header-left h1 {
     font-size: 1.2rem;
   }
+  
   .admin-name {
     display: none;
+  }
+
+  .pet-name-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+
+  .status-indicator {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.8rem;
+    align-self: flex-start;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .primary-btn, .danger-btn, .status-btn {
+    width: 100%;
   }
 }
 </style>

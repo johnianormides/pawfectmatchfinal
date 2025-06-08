@@ -112,9 +112,6 @@
           <div class="user-details">
             <h1>{{ userProfile.name }}</h1>
             <p class="email">{{ userProfile.email }}</p>
-            <button class="edit-profile-btn" @click="handleEditProfile">
-              <i class="fas fa-edit"></i> Edit Profile
-            </button>
           </div>
         </div>
       </div>
@@ -176,74 +173,6 @@
         </div>
       </div>
     </main>
-
-    <!-- Edit Profile Modal -->
-    <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-      <div class="modal">
-        <h2>Edit Profile</h2>
-        <form @submit.prevent="updateProfile">
-          <div class="profile-edit-avatar">
-            <div class="avatar-preview">
-              <img :src="editForm.avatar || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' width=\'150\' height=\'150\'><circle cx=\'12\' cy=\'8\' r=\'4\' stroke=\'black\' stroke-width=\'2\' fill=\'none\'/><path d=\'M4 20c0-4 4-6 8-6s8 2 8 6\' stroke=\'black\' stroke-width=\'2\' fill=\'none\'/></svg>'" alt="Profile Picture">
-            </div>
-            <div class="edit-avatar-btn-beside-wrapper">
-              <button type="button" class="edit-avatar-btn-beside" @click="openCamera">
-                <i class="fas fa-camera"></i>
-              </button>
-              <button type="button" class="edit-avatar-btn-beside" @click="triggerGalleryUpload">
-                <i class="fas fa-image"></i>
-              </button>
-              <input
-                type="file"
-                ref="galleryInput"
-                accept="image/*"
-                style="display: none"
-                @change="handleGalleryChange"
-              >
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              v-model="editForm.name"
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              v-model="editForm.email"
-              required
-            >
-          </div>
-          <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="closeEditModal">Cancel</button>
-            <button type="submit" class="save-btn">Save Changes</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Camera Modal -->
-    <div v-if="showCameraModal" class="modal-overlay" @click.self="closeCamera">
-      <div class="modal camera-modal">
-        <h2>Take Profile Picture</h2>
-        <div class="camera-container">
-          <video ref="video" autoplay playsinline></video>
-          <canvas ref="canvas" style="display: none;"></canvas>
-        </div>
-        <div class="camera-actions">
-          <button class="cancel-btn" @click="closeCamera">Cancel</button>
-          <button class="capture-btn" @click="capturePhoto">
-            <i class="fas fa-camera"></i> Capture
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -268,25 +197,13 @@ export default {
         avatar: null
       },
 
-      // Edit Modal Data
-      showEditModal: false,
-      editForm: {
-        name: '',
-        email: '',
-        avatar: null
-      },
-
       // Status Page Data
       applications: [],
       loading: {
         applications: false,
         profile: false
       },
-      error: null,
-
-      // Camera Data
-      showCameraModal: false,
-      stream: null,
+      error: null
     };
   },
   mounted() {
@@ -331,11 +248,6 @@ export default {
     window.removeEventListener('resize', this.checkTouch);
     document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleKeydown);
-
-    // Clean up camera stream when component is destroyed
-    if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
-    }
   },
   methods: {
     // Navigation Methods
@@ -457,22 +369,6 @@ export default {
         }
       }
     },
-    async handleEditProfile() {
-      try {
-        // Fetch the latest user data before opening the edit modal
-        await this.fetchUserProfile();
-
-        // Now copy the updated profile to the edit form
-        this.editForm = { ...this.userProfile };
-        this.showEditModal = true;
-      } catch (error) {
-        console.error('Error preparing profile for edit:', error);
-        alert('Failed to load your latest profile data. Please try again.');
-      }
-    },
-    closeEditModal() {
-      this.showEditModal = false;
-    },
     async fetchApplications() {
       this.loading.applications = true;
       try {
@@ -561,180 +457,7 @@ export default {
       } finally {
         this.loading.profile = false;
       }
-    },
-
-    async updateProfile() {
-      try {
-        const formData = new FormData();
-        formData.append('full_name', this.editForm.name);
-        formData.append('email', this.editForm.email);
-
-        // Handle avatar upload if changed
-        if (this.editForm.avatar && this.editForm.avatar !== this.userProfile.avatar) {
-          // Convert base64 to blob if needed
-          if (typeof this.editForm.avatar === 'string' && this.editForm.avatar.startsWith('data:')) {
-            // Get the mime type from the data URL
-            const mimeType = this.editForm.avatar.split(';')[0].split(':')[1];
-            // Get the base64 data without the prefix
-            const base64Data = this.editForm.avatar.split(',')[1];
-            // Convert to blob
-            const byteCharacters = atob(base64Data);
-            const byteArrays = [];
-
-            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-              const slice = byteCharacters.slice(offset, offset + 512);
-              const byteNumbers = new Array(slice.length);
-              for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              byteArrays.push(byteArray);
-            }
-
-            const blob = new Blob(byteArrays, { type: mimeType });
-            formData.append('avatar', blob, 'profile-image.jpg');
-
-            console.log('Avatar blob created successfully:', blob.size, 'bytes');
-          }
-        }
-
-        console.log('Sending profile update request...');
-        const response = await fetch(`http://localhost:5000/api/user/${this.userProfile.id}`, {
-          method: 'PUT',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('Profile update response:', result);
-
-        // Update the local user profile
-        this.userProfile = { ...this.editForm };
-
-        // Update localStorage
-        localStorage.setItem('user', JSON.stringify(this.userProfile));
-
-        this.showEditModal = false;
-        alert('Profile updated successfully');
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        alert('Failed to update profile. Please try again.');
-      }
-    },
-    async openCamera() {
-      try {
-        console.log('Requesting camera access...');
-        this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        });
-
-        console.log('Camera access granted, opening modal');
-        this.showCameraModal = true;
-
-        this.$nextTick(() => {
-          const video = this.$refs.video;
-          if (video) {
-            console.log('Setting video source');
-            video.srcObject = this.stream;
-            video.onloadedmetadata = () => {
-              console.log('Video metadata loaded, playing video');
-              video.play().catch(e => console.error('Error playing video:', e));
-            };
-          } else {
-            console.error('Video element not found');
-          }
-        });
-      } catch (err) {
-        console.error('Error accessing camera:', err);
-        alert('Unable to access camera. Please make sure you have granted camera permissions and are using a secure connection (https).');
-      }
-    },
-    closeCamera() {
-      if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop());
-        this.stream = null;
-      }
-      this.showCameraModal = false;
-    },
-    capturePhoto() {
-      try {
-        const video = this.$refs.video;
-        const canvas = this.$refs.canvas;
-
-        if (!video || !canvas) {
-          console.error('Video or canvas element not found');
-          return;
-        }
-
-        console.log('Capturing photo from video:', video.videoWidth, 'x', video.videoHeight);
-
-        if (!video.videoWidth || !video.videoHeight) {
-          console.error('Video dimensions are not available yet');
-          alert('The camera is not ready yet. Please wait a moment and try again.');
-          return;
-        }
-
-        const context = canvas.getContext('2d');
-
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // Draw the current video frame on the canvas
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Convert canvas to data URL
-        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        console.log('Photo captured successfully');
-
-        // Update profile picture in edit form
-        this.editForm.avatar = imageDataUrl;
-
-        // Close camera
-        this.closeCamera();
-      } catch (error) {
-        console.error('Error capturing photo:', error);
-        alert('Failed to capture photo. Please try again.');
-      }
-    },
-    triggerGalleryUpload() {
-      this.$refs.galleryInput.click();
-    },
-    handleGalleryChange(event) {
-      const file = event.target.files[0];
-      if (file) {
-        console.log('Selected file:', file.name, file.type, file.size, 'bytes');
-
-        // Check file type and size
-        if (!file.type.startsWith('image/')) {
-          alert('Please select an image file');
-          return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-          alert('Image is too large. Please select an image smaller than 5MB.');
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          console.log('File loaded successfully');
-          this.editForm.avatar = e.target.result;
-        };
-        reader.onerror = (e) => {
-          console.error('Error reading file:', e);
-          alert('Failed to read the selected file. Please try again.');
-        };
-        reader.readAsDataURL(file);
-      }
-    },
+    }
   }
 };
 </script>

@@ -168,11 +168,15 @@ export default {
     }
   },
   mounted() {
-    this.fetchStats()
-    this.fetchPetCategories()
+    // Ensure pet stats are loaded before initializing charts
+    Promise.all([this.fetchStats(), this.fetchPetCategories()])
       .then(() => {
-    this.initCharts()
+        this.initCharts();
       })
+      .catch(error => {
+        console.error('Error loading dashboard data:', error);
+        this.initCharts(); // Initialize charts anyway to avoid UI issues
+      });
   },
   methods: {
     handleLogout() {
@@ -205,47 +209,84 @@ export default {
 
     async fetchStats() {
       try {
-        // First fetch all pets to calculate accurate stats
+        // Fetch all necessary data: pets, applications, and stats
         const petsResponse = await fetch('http://localhost:5000/api/pet')
         const statsResponse = await fetch('http://localhost:5000/api/admin/stats')
         const activitiesResponse = await fetch('http://localhost:5000/api/admin/recent-activities')
+        const applicationsResponse = await fetch('http://localhost:5000/api/application')
 
-        if (!statsResponse.ok || !activitiesResponse.ok || !petsResponse.ok) {
+        if (!statsResponse.ok || !activitiesResponse.ok || !petsResponse.ok || !applicationsResponse.ok) {
           throw new Error('Failed to fetch dashboard data')
         }
 
         const petsData = await petsResponse.json()
         const statsData = await statsResponse.json()
         const activitiesData = await activitiesResponse.json()
+        const applicationsData = await applicationsResponse.json()
 
         if (statsData.success) {
           // Start with API stats
           this.stats = statsData.data
 
-          // Override with accurate count from actual pets data
+          // Override with accurate counts from actual pets data
           if (petsData.success && petsData.data) {
+            // Get all pets with adopted status, make sure to include case variations
+            const adoptedPets = petsData.data.filter(pet => {
+              const status = pet.status ? pet.status.toLowerCase().trim() : '';
+              return status === 'adopted';
+            }).length;
+            
+            // Log all adopted pets for debugging
+            console.log('All pets:', petsData.data.length);
+            console.log('Adopted pets count:', adoptedPets);
+            console.log('Adopted pets:', petsData.data.filter(pet => {
+              const status = pet.status ? pet.status.toLowerCase().trim() : '';
+              return status === 'adopted';
+            }).map(p => ({ id: p.id, name: p.name, status: p.status })));
+            
             // Count available pets directly from pet data
             const availablePets = petsData.data.filter(pet =>
-              pet.status && pet.status.toLowerCase() === 'available'
+              pet.status && pet.status.toLowerCase().trim() === 'available'
             ).length
 
-            // Update the stats with accurate count
-            this.stats.availablePets = availablePets
+            // Count pending applications directly from applications data
+            let pendingApplications = 0;
+            if (applicationsData.success && applicationsData.data) {
+              pendingApplications = applicationsData.data.filter(app => 
+                app.status && app.status.toLowerCase() === 'pending'
+              ).length;
+              console.log('Pending applications count:', pendingApplications);
+            }
+
+            // Update the stats with accurate counts
+            this.stats.availablePets = availablePets;
+            this.stats.completedAdoptions = adoptedPets;
+            this.stats.pendingApplications = pendingApplications;
+            
+            console.log('Stats updated from fetchStats:', {
+              availablePets,
+              adoptedPets,
+              pendingApplications,
+              completedAdoptions: this.stats.completedAdoptions
+            });
           }
         }
 
         if (activitiesData.success) {
           this.recentActivities = activitiesData.data
         }
+
+        return this.stats; // Return stats for promise chaining
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
         // Fallback to sample data if the API fails
         this.stats = {
           totalPets: 24,
           availablePets: 15,
-          pendingApplications: 8,
-          completedAdoptions: 12
+          pendingApplications: 0,  // Default to 0 pending applications
+          completedAdoptions: 3  // Match actual completed adoptions count
         }
+        throw error;
       }
     },
 
@@ -267,29 +308,38 @@ export default {
             cats: 0
           }
 
-          // Count available pets
-          let availablePets = 0;
-
           // Count pets by species/type
           result.data.forEach(pet => {
             const species = pet.species ? pet.species.toLowerCase() : '';
-            const status = pet.status ? pet.status.toLowerCase() : '';
-
+            
             if (species === 'dog') {
               this.petCategories.dogs++;
             } else if (species === 'cat') {
               this.petCategories.cats++;
             }
-
-            // Count pets available for adoption
-            if (status === 'available') {
-              availablePets++;
-            }
           });
 
-          // Update the stats with the actual count of available pets
-          this.stats.availablePets = availablePets;
+          // Count adopted pets directly from pet data - use same logic as in fetchStats
+          const adoptedPets = result.data.filter(pet => {
+            const status = pet.status ? pet.status.toLowerCase().trim() : '';
+            return status === 'adopted';
+          }).length;
+          
+          // Only update the stats if we have a valid count
+          if (adoptedPets > 0) {
+            this.stats.completedAdoptions = adoptedPets;
+          }
+          
+          console.log('Stats updated from fetchPetCategories:', {
+            dogs: this.petCategories.dogs,
+            cats: this.petCategories.cats,
+            adoptedPets,
+            completedAdoptions: this.stats.completedAdoptions
+          });
+          
+          return this.petCategories; // Return categories for promise chaining
         }
+        return this.petCategories;
       } catch (error) {
         console.error('Error fetching pet categories:', error)
         // Fallback to sample data
@@ -297,6 +347,7 @@ export default {
           dogs: 12,
           cats: 8
         }
+        throw error;
       }
     },
 
@@ -309,7 +360,7 @@ export default {
           labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
           datasets: [{
             label: 'Adoptions',
-            data: [0, 0, 2, 3, 2, 1],
+            data: [0, 0, 1, 2, 0, 3], // Updated to reflect current adoption count of 3
             borderColor: '#f7871f',
             tension: 0.4,
             fill: false
