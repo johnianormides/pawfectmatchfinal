@@ -18,16 +18,46 @@
           <form class="signup-main-form" @submit.prevent="handleSignUp">
             <div class="name-fields">
               <div class="signup-input-group">
+                <label class="input-label">First Name</label>
                 <input type="text" v-model="signupFirstName" placeholder="First Name" required />
               </div>
               <div class="signup-input-group">
-                <input type="text" v-model="signupLastName" placeholder="Last Name" required />
+                <label class="input-label">Middle Name <span class="optional-label">(Optional)</span></label>
+                <input type="text" v-model="signupMiddleName" placeholder="Middle Name" />
               </div>
             </div>
-            <div class="signup-input-group">
-              <input type="email" v-model="signupEmail" placeholder="Email" required />
+            <div class="name-fields">
+              <div class="signup-input-group">
+                <label class="input-label">Last Name</label>
+                <input type="text" v-model="signupLastName" placeholder="Last Name" required />
+              </div>
+              <div class="signup-input-group">
+                <label class="input-label">Suffix <span class="optional-label">(Optional)</span></label>
+                <select v-model="signupSuffix" class="suffix-select">
+                  <option value="">Select Suffix</option>
+                  <option value="Jr.">Jr.</option>
+                  <option value="Sr.">Sr.</option>
+                  <option value="II">II</option>
+                  <option value="III">III</option>
+                  <option value="IV">IV</option>
+                  <option value="V">V</option>
+                  <option value="PhD">PhD</option>
+                  <option value="MD">MD</option>
+                </select>
+              </div>
+            </div>
+            <div class="name-fields">
+              <div class="signup-input-group age-field">
+                <label class="input-label">Age</label>
+                <input type="number" v-model="signupAge" placeholder="Age" min="18" max="120" required />
+              </div>
+              <div class="signup-input-group email-field">
+                <label class="input-label">Email</label>
+                <input type="email" v-model="signupEmail" placeholder="Email" required />
+              </div>
             </div>
             <div class="signup-input-group password-field">
+              <label class="input-label">Password</label>
               <input :type="showPassword ? 'text' : 'password'" v-model="signupPassword" placeholder="Password" required @input="validatePassword" @focus="showPasswordRules = true" @blur="showPasswordRules = false" />
               <span class="signup-eye" @click="showPassword = !showPassword">
                 <svg v-if="!showPassword" width="20" height="20" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="3"/></svg>
@@ -41,6 +71,7 @@
               </div>
             </div>
             <div class="signup-input-group">
+              <label class="input-label">Confirm Password</label>
               <input :type="showPassword ? 'text' : 'password'" v-model="signupConfirm" placeholder="Confirm Password" required @input="validatePassword" :class="{ 'input-mismatch': signupConfirm && signupPassword !== signupConfirm }" />
             </div>
             <span v-if="signupConfirm && signupPassword !== signupConfirm" class="mismatch-msg">Passwords do not match</span>
@@ -59,6 +90,7 @@
           <div v-if="errorMessage" class="error-message">
             {{ errorMessage }}
           </div>
+
           <div class="signup-bottom-row">
             <span>Already have an account?</span>
             <a href="/login" class="signup-link">Log in</a>
@@ -96,7 +128,10 @@ export default {
   data() {
     return {
       signupFirstName: '',
+      signupMiddleName: '',
       signupLastName: '',
+      signupSuffix: '',
+      signupAge: '',
       signupEmail: '',
       signupPassword: '',
       signupConfirm: '',
@@ -119,6 +154,7 @@ export default {
       return (
         this.signupFirstName &&
         this.signupLastName &&
+        this.signupAge &&
         this.signupEmail &&
         this.signupPassword &&
         this.signupConfirm &&
@@ -147,8 +183,15 @@ export default {
       this.errorMessage = '';
 
       try {
+        // Build full name with optional middle name and suffix
+        let fullName = this.signupFirstName;
+        if (this.signupMiddleName) fullName += ' ' + this.signupMiddleName;
+        fullName += ' ' + this.signupLastName;
+        if (this.signupSuffix) fullName += ' ' + this.signupSuffix;
+        
         const response = await api.post('/signup', {
-          name: this.signupFirstName + ' ' + this.signupLastName,
+          name: fullName,
+          age: parseInt(this.signupAge),
           email: this.signupEmail,
           password: this.signupPassword
         });
@@ -156,9 +199,23 @@ export default {
         const data = response.data;
 
         if (data.success) {
+          // Store user data in localStorage
+          const userData = {
+            name: fullName,
+            email: this.signupEmail,
+            age: this.signupAge.toString()
+          };
+          localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Also store age separately for redundancy
+          localStorage.setItem('userAge', this.signupAge.toString());
+
           // Clear form
           this.signupFirstName = '';
+          this.signupMiddleName = '';
           this.signupLastName = '';
+          this.signupSuffix = '';
+          this.signupAge = '';
           this.signupEmail = '';
           this.signupPassword = '';
           this.signupConfirm = '';
@@ -291,43 +348,56 @@ export default {
 .name-fields {
   display: flex;
   gap: 0.6rem;
-  margin-bottom: 0.4rem;
 }
 
 .signup-input-group {
   width: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   background: #f7f8fa;
   border-radius: 12px;
   border: 1.5px solid #e0e0e0;
-  margin-bottom: 0.1rem;
   position: relative;
+  padding: 0.4rem 0.5rem 0.3rem 0.5rem;
 }
 
-.signup-input-icon {
-  margin-left: 1rem;
-  color: #f7871f;
-  display: flex;
-  align-items: center;
-}
-
-.signup-input-group input {
+.signup-input-group input, .signup-input-group select {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 0.7rem 0.8rem 0.7rem 0.5rem;
   font-size: 0.97rem;
   outline: none;
   color: #222;
 }
 
+.signup-input-group input::placeholder {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 0.2rem;
+  margin-left: 0.2rem;
+}
+
+.optional-label {
+  font-size: 0.75rem;
+  color: #999;
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
 .password-field {
-  position: relative;
+  margin-bottom: 0.2rem;
 }
 
 .signup-eye {
-  margin-right: 1rem;
+  position: absolute;
+  right: 0.5rem;
+  top: 2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -465,6 +535,16 @@ export default {
   text-decoration: underline;
 }
 
+.error-message {
+  color: #ff5252;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  background-color: #fff6f6;
+  border-left: 3px solid #ff5252;
+  border-radius: 4px;
+}
+
 .signup-illustration-col {
   flex: 1 1 320px;
   background: #fc9d04;
@@ -554,6 +634,34 @@ export default {
   margin-top: 1rem;
   color: #333;
   font-size: 1rem;
+}
+
+.error-message {
+  color: #ff5252;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  background-color: #fff6f6;
+  border-left: 3px solid #ff5252;
+  border-radius: 4px;
+}
+
+.suffix-select {
+  padding: 0.2rem 0;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.5rem;
+}
+
+.age-field {
+  max-width: 30%;
+}
+
+.email-field {
+  flex-grow: 1;
 }
 
 @media (max-width: 900px) {

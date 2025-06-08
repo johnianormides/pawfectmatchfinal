@@ -148,8 +148,8 @@
             <p><strong>Last Updated:</strong> {{ formatDate(app.statusUpdatedDate) }}</p>
           </div>
 
-          <div v-if="app.remarks" class="remarks-section" :class="{ 'rejection-remarks': app.status === 'Rejected' }">
-            <h4>{{ app.status === 'Rejected' ? 'Rejection Reason:' : 'Shelter Notes:' }}</h4>
+          <div v-if="app.remarks" class="remarks-section" :class="{ 'rejection-remarks': app.status === 'Declined' }">
+            <h4>{{ app.status === 'Declined' ? 'Decline Reason:' : 'Shelter Notes:' }}</h4>
             <p>{{ app.remarks }}</p>
           </div>
 
@@ -167,7 +167,7 @@
               Contact Shelter
             </button>
             <button
-              v-if="app.status === 'Canceled' || app.status === 'Rejected'"
+              v-if="app.status === 'Canceled' || app.status === 'Declined'"
               @click="deleteApplication(app.id)"
               class="btn btn-cancel">
               Delete
@@ -425,7 +425,7 @@ export default {
       switch (status) {
         case 'Pending': return 'status-pending';
         case 'Accepted': return 'status-accepted';
-        case 'Rejected': return 'status-rejected';
+        case 'Declined': return 'status-declined';
         case 'Canceled': return 'status-canceled';
         default: return 'status-unknown';
       }
@@ -762,7 +762,7 @@ export default {
 }
 
 body {
-  background: var(--bg-color);
+  background: #f0f0f0;
 }
 
 /* Hidden checkbox */
@@ -776,8 +776,8 @@ body {
 /* Navigation Bar */
 .nav-bar {
   width: 100%;
-  height: var(--nav-height);
-  background: var(--bg-color);
+  height: 70px;
+  background: #f0f0f0;
   position: fixed;
   top: 0;
   left: 0;
@@ -804,9 +804,9 @@ body {
   font-size: 1.8rem;
   font-weight: 800;
   text-decoration: none;
-  color: var(--primary-color);
+  color: #ff914d;
   letter-spacing: 1px;
-  transition: var(--transition);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -829,33 +829,33 @@ body {
 .nav-links a {
   text-decoration: none;
   font-size: 1rem;
-  color: var(--text-color);
+  color: #555;
   font-weight: 600;
   display: flex;
   align-items: center;
   padding: 10px 10px;
   border-radius: 15px;
-  transition: var(--transition);
-  background: var(--bg-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: #f0f0f0;
   box-shadow:
-    8px 8px 16px var(--shadow-dark),
-    -8px -8px 16px var(--shadow-light);
+    8px 8px 16px #d3d3d3,
+    -8px -8px 16px #ffffff;
   white-space: nowrap;
 }
 
 .nav-links a:hover {
-  color: var(--primary-color);
+  color: #ff914d;
   transform: translateY(-2px);
   box-shadow:
-    4px 4px 8px var(--shadow-dark),
-    -4px -4px 8px var(--shadow-light);
+    4px 4px 8px #d3d3d3,
+    -4px -4px 8px #ffffff;
 }
 
 .nav-links a:active {
   transform: translateY(0);
   box-shadow:
-    inset 3px 3px 6px var(--shadow-dark),
-    inset -3px -3px 6px var(--shadow-light);
+    inset 3px 3px 6px #d3d3d3,
+    inset -3px -3px 6px #ffffff;
 }
 
 .nav-text {
@@ -865,8 +865,8 @@ body {
 .icon-fix {
   width: 20px;
   text-align: center;
-  color: var(--primary-color);
-  transition: var(--transition);
+  color: #ff914d;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .nav-links a:hover .icon-fix {
@@ -879,11 +879,11 @@ body {
   cursor: pointer;
   padding: 10px;
   border-radius: 8px;
-  transition: var(--transition);
-  background: var(--bg-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: #f0f0f0;
   box-shadow:
-    5px 5px 10px var(--shadow-dark),
-    -5px -5px 10px var(--shadow-light);
+    5px 5px 10px #d3d3d3,
+    -5px -5px 10px #ffffff;
   width: 40px;
   height: 40px;
   justify-content: center;
@@ -901,8 +901,8 @@ body {
 .hamburger-icon .bar {
   height: 2px;
   width: 100%;
-  background-color: var(--text-color);
-  transition: var(--transition);
+  background-color: #555;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   border-radius: 2px;
 }
 
@@ -911,7 +911,7 @@ body {
 }
 
 .mobile-menu-button:hover .bar {
-  background-color: var(--primary-color);
+  background-color: #ff914d;
 }
 
 /* Transform hamburger to X when sidebar is open */
@@ -929,14 +929,14 @@ body {
 
 /* Sidebar Styles */
 .side_bar {
-  background: var(--bg-color);
+  background: #f0f0f0;
   position: fixed;
   top: 0;
   left: -100%;
   height: 100%;
-  width: var(--sidebar-width);
+  width: 300px;
   z-index: 1001;
-  transition: var(--transition);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: 10px 0 20px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -948,7 +948,7 @@ body {
 }
 
 .sidebar-header {
-  height: var(--nav-height);
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -975,7 +975,7 @@ body {
 
 .sidebar-links a {
   position: relative;
-  color: var(--text-color);
+  color: #555;
   text-decoration: none;
   font-size: 1rem;
   font-weight: 500;
@@ -984,27 +984,27 @@ body {
   width: 100%;
   border-radius: 12px;
   padding: 15px 20px;
-  transition: var(--transition);
-  background: var(--bg-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: #f0f0f0;
   box-shadow:
-    5px 5px 10px var(--shadow-dark),
-    -5px -5px 10px var(--shadow-light);
+    5px 5px 10px #d3d3d3,
+    -5px -5px 10px #ffffff;
 }
 
 .sidebar-links a:hover {
-  color: var(--primary-color);
+  color: #ff914d;
   padding-left: 25px;
   transform: translateX(5px);
   box-shadow:
-    3px 3px 6px var(--shadow-dark),
-    -3px -3px 6px var(--shadow-light);
+    3px 3px 6px #d3d3d3,
+    -3px -3px 6px #ffffff;
 }
 
 .sidebar-links a:active {
   transform: translateX(5px) scale(0.98);
   box-shadow:
-    inset 2px 2px 5px var(--shadow-dark),
-    inset -2px -2px 5px var(--shadow-light);
+    inset 2px 2px 5px #d3d3d3,
+    inset -2px -2px 5px #ffffff;
 }
 
 .sidebar-footer {
@@ -1024,18 +1024,19 @@ body {
   border-radius: 50%;
   text-align: center;
   line-height: 45px;
-  color: var(--text-color);
+  color: #555;
   font-size: 1.1rem;
-  background: var(--bg-color);
-  transition: var(--transition);
+  background: #f0f0f0;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow:
-    5px 5px 10px var(--shadow-dark),
-    -5px -5px 10px var(--shadow-light);
+    5px 5px 10px #d3d3d3,
+    -5px -5px 10px #ffffff;
 }
 
 .media_icons a:hover {
-  color: var(--primary-color);
-  transform: translateY(-3px) scale(1.1);
+  color: #ff914d;
+  background: #fff7f0;
+  transform: scale(1.08);
 }
 
 .close-sidebar {
@@ -1044,17 +1045,17 @@ body {
   text-align: center;
   line-height: 40px;
   cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-color);
-  background: var(--bg-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: #555;
+  background: #f0f0f0;
   border-radius: 50%;
   box-shadow:
-    3px 3px 6px var(--shadow-dark),
-    -3px -3px 6px var(--shadow-light);
+    3px 3px 6px #d3d3d3,
+    -3px -3px 6px #ffffff;
 }
 
 .close-sidebar:hover {
-  color: var(--primary-color);
+  color: #ff914d;
   transform: rotate(90deg);
 }
 
@@ -1098,7 +1099,7 @@ body {
   padding: 12px 20px;
   display: flex;
   align-items: center;
-  color: var(--text-color);
+  color: #555;
   white-space: nowrap;
   width: 100%;
   transition: all 0.3s ease;
@@ -1113,7 +1114,7 @@ body {
 /* Profile Item - Subtle Highlight */
 .profile-item:hover {
   background: rgba(255,145,77,0.1);
-  color: var(--primary-color);
+  color: #ff914d;
 }
 
 /* Logout Item - Standout Highlight */
@@ -1157,7 +1158,7 @@ body {
 
 .mobile-dropdown-menu .profile-item:hover {
   background: rgba(255,145,77,0.1);
-  color: var(--primary-color);
+  color: #ff914d;
   padding-left: 25px;
 }
 
@@ -1214,14 +1215,14 @@ body {
     z-index: 1100;
   }
   .side_bar {
-    width: var(--sidebar-width);
+    width: 300px;
     max-width: 100vw;
     min-width: 260px;
     left: -100%;
     box-shadow: 8px 0 24px rgba(0,0,0,0.08);
     border-top-right-radius: 16px;
     border-bottom-right-radius: 16px;
-    background: var(--bg-color);
+    background: #f0f0f0;
     padding-top: 0;
   }
   .hidden-checkbox:checked ~ .side_bar {
@@ -1232,7 +1233,7 @@ body {
     height: 70px;
     border-bottom: none;
     box-shadow: none;
-    background: var(--bg-color);
+    background: #f0f0f0;
     border-top-right-radius: 16px;
   }
   .sidebar-links {
@@ -1241,64 +1242,42 @@ body {
   .sidebar-links a {
     margin-bottom: 10px;
     box-shadow:
-      4px 4px 12px var(--shadow-dark),
-      -4px -4px 12px var(--shadow-light);
-    background: var(--bg-color);
+      4px 4px 12px #d3d3d3,
+      -4px -4px 12px #ffffff;
+    background: #f0f0f0;
     border-radius: 12px;
     padding: 12px 20px;
     font-size: 1rem;
-    color: var(--text-color);
+    color: #555;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: var(--transition);
-  }
-  .sidebar-links a:hover {
-    color: var(--primary-color);
-    background: #fff7f0;
-    box-shadow:
-      2px 2px 6px var(--shadow-dark),
-      -2px -2px 6px var(--shadow-light);
-  }
-  .sidebar-footer {
-    margin-top: auto;
-    padding-bottom: 24px;
-    display: flex;
-    justify-content: center;
-  }
-  .media_icons {
-    display: flex;
-    gap: 18px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   .media_icons a {
     height: 40px;
     width: 40px;
     border-radius: 50%;
-    background: var(--bg-color);
+    background: #f0f0f0;
     box-shadow:
-      2px 2px 8px var(--shadow-dark),
-      -2px -2px 8px var(--shadow-light);
+      2px 2px 8px #d3d3d3,
+      -2px -2px 8px #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-color);
+    color: #555;
     font-size: 1.1rem;
-    transition: var(--transition);
-  }
-  .media_icons a:hover {
-    color: var(--primary-color);
-    background: #fff7f0;
-    transform: scale(1.08);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   .close-sidebar {
     position: absolute;
     top: 16px;
     right: 16px;
     z-index: 1200;
-    background: var(--bg-color);
+    background: #f0f0f0;
     box-shadow:
-      2px 2px 8px var(--shadow-dark),
-      -2px -2px 8px var(--shadow-light);
+      2px 2px 8px #d3d3d3,
+      -2px -2px 8px #ffffff;
   }
 }
 
@@ -1357,8 +1336,8 @@ body {
 .dropdown-menu li a:focus,
 .user-dropdown-menu li a:focus {
   background: transparent;
-  color: var(--primary-color);
-  border-left: 3px solid var(--primary-color);
+  color: #ff914d;
+  border-left: 3px solid #ff914d;
   padding-left: 17px;
 }
 
@@ -1366,7 +1345,7 @@ body {
 .user-dropdown-menu li a:hover i,
 .dropdown-menu li a:focus i,
 .user-dropdown-menu li a:focus i {
-  color: var(--primary-color);
+  color: #ff914d;
 }
 
 .dropdown-menu,
@@ -1395,8 +1374,8 @@ body {
 .dropdown-menu li a:focus,
 .user-dropdown-menu li a:focus {
   background: transparent;
-  color: var(--primary-color);
-  border-left: 3px solid var(--primary-color);
+  color: #ff914d;
+  border-left: 3px solid #ff914d;
   padding-left: 17px;
 }
 
@@ -1414,7 +1393,7 @@ body {
 .status-page-title {
   text-align: center;
   font-size: 2.5rem;
-  color: var(--primary-color);
+  color: #ff914d;
   margin-bottom: 2rem;
   font-weight: 700;
   letter-spacing: 1px;
@@ -1425,9 +1404,9 @@ body {
   font-size: 1.2rem;
   color: #666;
   padding: 2rem;
-  background-color: var(--card-bg);
+  background-color: #f0f0f0;
   border-radius: 8px;
-  box-shadow: var(--card-shadow);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .applications-grid {
@@ -1437,14 +1416,14 @@ body {
 }
 
 .application-card {
-  background-color: var(--card-bg);
+  background-color: #f0f0f0;
   border-radius: 10px;
-  box-shadow: 0 5px 15px var(--card-shadow);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  border: 1px solid var(--border-color);
+  border: 1px solid #f0f0f0;
 }
 
 .application-card:hover {
@@ -1457,7 +1436,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #f0f0f0;
   padding-bottom: 0.75rem;
 }
 
@@ -1472,17 +1451,37 @@ body {
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-light);
+  color: white;
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.status-pending { background-color: #ffc107; color: #333; }
-.status-accepted { background-color: #28a745; }
-.status-rejected { background-color: #dc3545; }
-.status-canceled { background-color: #6c757d; }
-.status-unknown { background-color: #adb5bd; }
+.status-pending { 
+  background-color: #ff914d; /* Orange */
+  color: white; 
+}
+
+.status-accepted { 
+  background-color: #28a745; /* Green */
+  color: white; 
+}
+
+.status-declined { 
+  background-color: #dc3545; /* Red */
+  color: white; 
+}
+
+.status-canceled { 
+  background-color: #6c757d; 
+  color: white; 
+}
+
+.status-unknown { 
+  background-color: #adb5bd; 
+  color: white; 
+}
 
 .pet-info-container {
   display: flex;
@@ -1496,7 +1495,7 @@ body {
   height: 80px;
   border-radius: 8px;
   object-fit: cover;
-  border: 2px solid var(--border-color);
+  border: 2px solid #f0f0f0;
 }
 
 .pet-details {
@@ -1546,17 +1545,23 @@ body {
 }
 
 .rejection-remarks {
+  margin-top: 15px;
+  padding: 15px;
   background-color: #ffebee;
+  border-radius: 8px;
   border-left: 4px solid #f44336;
 }
 
 .rejection-remarks h4 {
+  margin-bottom: 8px;
   color: #d32f2f;
+  font-weight: 600;
 }
 
 .rejection-remarks p {
   color: #c62828;
   font-weight: 500;
+  line-height: 1.5;
 }
 
 .action-buttons {
@@ -1565,7 +1570,7 @@ body {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #f0f0f0;
 }
 
 .btn {
@@ -1601,7 +1606,7 @@ body {
 }
 
 .btn-contact {
-  background-color: var(--primary-color);
+  background-color: #ff914d;
   color: white;
 }
 

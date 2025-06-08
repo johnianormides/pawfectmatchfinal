@@ -192,33 +192,97 @@
             <div class="modern-group">
               <label>Name <span class="required">*</span></label>
               <div class="modern-row-2">
-                <input v-model="application.firstName" placeholder="First Name" required />
-                <input v-model="application.lastName" placeholder="Last Name" required />
+                <div class="input-with-icon">
+                  <i class="fas fa-user-circle input-icon"></i>
+                  <input v-model="application.firstName" placeholder="First Name" readonly class="readonly-field" />
+                </div>
+                <div class="input-with-icon">
+                  <i class="fas fa-user-edit input-icon"></i>
+                  <input v-model="application.middleName" placeholder="Middle Name (Optional)" readonly class="readonly-field" />
+                </div>
+                <div class="input-with-icon">
+                  <i class="fas fa-user input-icon"></i>
+                  <input v-model="application.lastName" placeholder="Last Name" readonly class="readonly-field" />
+                </div>
+                <div class="input-with-icon">
+                  <i class="fas fa-id-card input-icon"></i>
+                  <select v-model="application.suffix" class="suffix-select readonly-field" disabled>
+                    <option value="">No Suffix</option>
+                    <option value="Jr.">Jr.</option>
+                    <option value="Sr.">Sr.</option>
+                    <option value="II">II</option>
+                    <option value="III">III</option>
+                    <option value="IV">IV</option>
+                    <option value="V">V</option>
+                    <option value="PhD">PhD</option>
+                    <option value="MD">MD</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div class="modern-group">
               <label>E-mail <span class="required">*</span></label>
-              <input v-model="application.emailAddress" placeholder="example@example.com" required />
+              <div class="input-with-icon">
+                <i class="fas fa-envelope input-icon"></i>
+                <input v-model="application.emailAddress" placeholder="example@example.com" readonly class="readonly-field" />
+              </div>
             </div>
             <div class="modern-group">
               <label>Phone Number (Work)</label>
-              <input
-                v-model="application.phoneNumberWork"
-                placeholder="Phone Number (Work)"
-                type="tel"
-                inputmode="numeric"
-                pattern="[0-9]{11}"
-                maxlength="11"
-                @input="validatePhoneWork"
-                required
-              />
+              <div class="input-with-icon">
+                <i class="fas fa-phone input-icon"></i>
+                <input
+                  v-model="application.phoneNumberWork"
+                  placeholder="Phone Number (Work)"
+                  type="tel"
+                  inputmode="numeric"
+                  pattern="[0-9]{11}"
+                  maxlength="11"
+                  @input="validatePhoneWork"
+                  required
+                />
+              </div>
+            </div>
+            <div class="modern-group">
+              <label>Age</label>
+              <div class="input-with-icon">
+                <i class="fas fa-birthday-cake input-icon"></i>
+                <input
+                  v-model="application.age"
+                  placeholder="Age"
+                  type="tel"
+                  inputmode="numeric"
+                  pattern="[0-9]{1,2}"
+                  maxlength="2"
+                  readonly
+                  class="readonly-field"
+                />
+              </div>
             </div>
             <div class="modern-group">
               <label>Address</label>
-              <input v-model="application.addressStreet" placeholder="Street Address" required />
+              <select v-model="application.barangay" required>
+                <option value="">Select Barangay</option>
+                <option value="Barretto">Barretto</option>
+                <option value="East Bajac-bajac">East Bajac-bajac</option>
+                <option value="East Tapinac">East Tapinac</option>
+                <option value="Gordon Heights">Gordon Heights</option>
+                <option value="Kalaklan">Kalaklan</option>
+                <option value="New Asinan">New Asinan</option>
+                <option value="New Cabalan">New Cabalan</option>
+                <option value="New Ilalim">New Ilalim</option>
+                <option value="New Kababae">New Kababae</option>
+                <option value="New Kalalake">New Kalalake</option>
+                <option value="Old Cabalan">Old Cabalan</option>
+                <option value="Pag-asa">Pag-asa</option>
+                <option value="Santa Rita">Santa Rita</option>
+                <option value="West Bajac-bajac">West Bajac-bajac</option>
+                <option value="West Tapinac">West Tapinac</option>
+              </select>
+              <input v-model="application.addressStreet" placeholder="Specific Address (House/Unit No., Street Name)" required />
               <div class="modern-row-3">
-                <input v-model="application.addressCity" placeholder="City" required />
-                <input v-model="application.addressState" placeholder="State / Province" required />
+                <input v-model="application.addressCity" placeholder="City" required readonly />
+                <input v-model="application.addressState" placeholder="State / Province" required readonly />
                 <input
                   v-model="application.addressZIP"
                   placeholder="Postal / ZIP"
@@ -228,17 +292,38 @@
                   maxlength="4"
                   @input="validateZIP"
                   required
+                  readonly
                 />
               </div>
-              <input v-model="application.addressCountry" placeholder="Country" required />
+              <input v-model="application.addressCountry" placeholder="Country" required readonly />
             </div>
             <div class="modern-group">
               <label>Submit 1 valid ID (image or PDF) <span class="file-size-limit">(Max 5MB)</span></label>
-              <input type="file" @change="handleFileUpload($event, 'validIdFile')" accept="image/*,application/pdf" required />
+              <div class="file-upload-container">
+                <label for="validIdFile" class="file-upload-box">
+                  <i class="fas fa-id-card-alt"></i> Click to upload ID
+                  <input type="file" id="validIdFile" @change="handleFileUpload($event, 'validIdFile')" accept="image/*,application/pdf" required />
+                </label>
+                <div class="file-info">
+                  <label for="validIdFile" class="choose-file-button">Choose File</label>
+                  <span class="file-name">{{ validIdFile ? validIdFile.name : 'No file chosen' }}</span>
+                  <button v-if="validIdFile" @click.prevent="viewFile(validIdFile)" class="view-file-button">View File</button>
+                </div>
+              </div>
             </div>
             <div class="modern-group">
               <label>Submit a photo of your house <span class="file-size-limit">(Max 5MB)</span></label>
-              <input type="file" @change="handleFileUpload($event, 'houseImageFile')" accept="image/*" required />
+              <div class="file-upload-container">
+                <label for="houseImageFile" class="file-upload-box">
+                  <i class="fas fa-home"></i> Click to upload house photo
+                  <input type="file" id="houseImageFile" @change="handleFileUpload($event, 'houseImageFile')" accept="image/*" required />
+                </label>
+                <div class="file-info">
+                  <label for="houseImageFile" class="choose-file-button">Choose File</label>
+                  <span class="file-name">{{ houseImageFile ? houseImageFile.name : 'No file chosen' }}</span>
+                  <button v-if="houseImageFile" @click.prevent="viewFile(houseImageFile)" class="view-file-button">View File</button>
+                </div>
+              </div>
             </div>
             <div class="modern-group radio-group">
               <label>Do you have another pet?</label>
@@ -254,21 +339,13 @@
                 <label class="rich-radio"><input type="radio" v-model="application.petUsedToOthers" value="No" required /> No</label>
               </div>
             </div>
+            <!-- Add specific pet type question if hasOtherPet is Yes -->
+            <div v-if="application.hasOtherPet === 'Yes'" class="modern-group">
+              <label>What specific pet do you have?</label>
+              <input v-model="application.specificPetType" placeholder="e.g., Dog, Cat, Bird" required />
+            </div>
           </div>
           <div class="modern-form-col">
-            <div class="modern-group">
-              <label>Age</label>
-              <input
-                v-model="application.age"
-                placeholder="Age"
-                type="tel"
-                inputmode="numeric"
-                pattern="[0-9]{1,2}"
-                maxlength="2"
-                @input="validateAge"
-                required
-              />
-            </div>
             <div class="modern-group">
               <label><i class="fas fa-home rich-section-icon"></i> I / We live in a</label>
               <div class="modern-radio-col">
@@ -299,6 +376,17 @@
       </form>
     </div>
   </div>
+
+  <!-- Add File View Modal -->
+  <div v-if="showFileModal" class="file-modal-overlay" @click.self="closeFileModal">
+    <div class="file-modal-content">
+      <button class="file-modal-close" @click="closeFileModal">×</button>
+      <div class="file-content">
+        <img v-if="fileType === 'image'" :src="fileUrl" alt="File Content" />
+        <iframe v-if="fileType === 'pdf'" :src="fileUrl" frameborder="0"></iframe>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -320,6 +408,7 @@ export default {
       isTablet: false,
       isTouch: false,
       showApplicationModal: false,
+      showFileModal: false,
       pet: null,
       loading: true,
       error: null,
@@ -327,25 +416,30 @@ export default {
       user: null,
       application: {
         firstName: '',
+        middleName: '',
         lastName: '',
+        suffix: '',
         age: '',
         emailAddress: '',
         phoneNumberWork: '',
         phoneNumberHome: '',
+        barangay: '',
         addressStreet: '',
-        addressStreet2: '',
-        addressCity: '',
-        addressState: '',
-        addressZIP: '',
-        addressCountry: '',
+        addressCity: 'Olongapo City',
+        addressState: 'Zambales',
+        addressZIP: '2200',
+        addressCountry: 'Philippines',
         hasOtherPet: '',
         petUsedToOthers: '',
         homeType: '',
         petsAllowedInApartment: '',
         readyForFinancialNeeds: '',
+        specificPetType: '', // Add new property for specific pet type
       },
       validIdFile: null,
       houseImageFile: null,
+      fileUrl: '',
+      fileType: '',
     }
   },
   mounted() {
@@ -362,6 +456,9 @@ export default {
 
     // Fetch pet data if ID is available
     this.fetchPetData();
+    
+    // Auto-fill user information from localStorage
+    this.loadUserInfo();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResizeSidebar);
@@ -607,7 +704,8 @@ export default {
             home_type: this.application.homeType,
             pets_allowed: this.application.petsAllowedInApartment,
             address: {
-              street: this.application.addressStreet,
+              street: this.application.addressStreet, // This is now the specific address
+              barangay: this.application.barangay, // Add barangay
               city: this.application.addressCity,
               state: this.application.addressState,
               zip: this.application.addressZIP,
@@ -620,6 +718,7 @@ export default {
           }),
           other_pets: JSON.stringify({
             has_pets: this.application.hasOtherPet === 'Yes',
+            specific_type: this.application.specificPetType, // Include specific pet type
             used_to_others: this.application.petUsedToOthers === 'Yes'
           }),
           experience: JSON.stringify({
@@ -632,7 +731,11 @@ export default {
               age: this.application.age
             },
             financial_readiness: this.application.readyForFinancialNeeds === 'Yes'
-          })
+          }),
+          // Add new fields to application data
+          name: `${this.application.firstName}${this.application.middleName ? ' ' + this.application.middleName : ''}${this.application.lastName ? ' ' + this.application.lastName : ''}${this.application.suffix ? ' ' + this.application.suffix : ''}`,
+          address_barangay: this.application.barangay,
+          address_specific: this.application.addressStreet // This is now the specific address
         };
 
         // Submit application to API
@@ -710,6 +813,112 @@ export default {
       console.log('Image failed to load, replacing with default');
       event.target.src = '/Img/default-pet.jpg';
     },
+    
+    loadUserInfo() {
+      try {
+        // Get user data from localStorage
+        const userData = localStorage.getItem('user');
+        console.log('Raw user data from localStorage:', userData);
+        
+        // Check for direct age storage (more reliable)
+        const directAge = localStorage.getItem('userAge');
+        if (directAge) {
+          this.application.age = directAge;
+          console.log("Age set from direct localStorage:", this.application.age);
+        }
+        
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('Parsed user data:', user);
+          
+          // Check if we have name information
+          if (user.name) {
+            // Split the name into parts
+            const nameParts = user.name.split(' ');
+            
+            if (nameParts.length >= 2) {
+              // First name is the first part
+              this.application.firstName = nameParts[0];
+              
+              // If there are exactly two parts, the second is the last name
+              if (nameParts.length === 2) {
+                this.application.lastName = nameParts[1];
+                this.application.middleName = '';
+              } 
+              // If there are more than two parts, handle middle name and last name correctly
+              else if (nameParts.length > 2) {
+                // Check if the last part might be a suffix
+                const possibleSuffix = nameParts[nameParts.length - 1];
+                const commonSuffixes = ['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'PhD', 'MD'];
+                
+                if (commonSuffixes.includes(possibleSuffix)) {
+                  // If the last part is a suffix, set it and use second-to-last as last name
+                  this.application.suffix = possibleSuffix;
+                  this.application.lastName = nameParts[nameParts.length - 2];
+                  
+                  // Middle name would be everything between first and last name
+                  if (nameParts.length > 3) {
+                    this.application.middleName = nameParts.slice(1, nameParts.length - 2).join(' ');
+                  }
+                } else {
+                  // Last name is the last part
+                  this.application.lastName = nameParts[nameParts.length - 1];
+                  
+                  // Middle name is everything between first and last name
+                  if (nameParts.length > 2) {
+                    this.application.middleName = nameParts.slice(1, nameParts.length - 1).join(' ');
+                  }
+                }
+              }
+            }
+          }
+          
+          // Set email if available
+          if (user.email) {
+            this.application.emailAddress = user.email;
+          }
+          
+          // Only set age from user data if we didn't already set it from direct storage
+          if (!directAge) {
+            // Enhanced age handling - with multiple fallbacks
+            console.log('User age from data:', user.age, 'Type:', typeof user.age);
+            
+            // Try multiple approaches to get the age
+            if (user.age !== undefined && user.age !== null) {
+              // Convert to string and assign
+              this.application.age = String(user.age);
+              console.log("Age set from user.age:", this.application.age);
+            } else if (user.experience && user.experience.age) {
+              // Try experience.age if structured that way
+              this.application.age = String(user.experience.age);
+              console.log("Age set from user.experience.age:", this.application.age);
+            } else if (user.contact_info && user.contact_info.age) {
+              // Try contact_info.age if structured that way
+              this.application.age = String(user.contact_info.age);
+              console.log("Age set from user.contact_info.age:", this.application.age);
+            } else {
+              // Default to a fallback age if nothing found
+              this.application.age = '30';
+              console.warn("No age found in user data, using default age: 30");
+            }
+          }
+          
+          console.log("Final application data:", this.application);
+        } else {
+          console.warn("No user data found in localStorage");
+          
+          // If no user data but we have direct age, we've already set it above
+          if (!directAge) {
+            this.application.age = '30';
+            console.warn("Using default age: 30");
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user information:', error);
+        // Fallback in case of error
+        this.application.age = '30';
+      }
+    },
 
     async checkPendingAndShowModal() {
       // Check if user is logged in
@@ -759,12 +968,48 @@ export default {
         this.showApplicationModal = true;
       }
     },
+
+    viewFile(file) {
+      if (file) {
+        // Revoke previous URL if it exists
+        if (this.fileUrl) {
+          URL.revokeObjectURL(this.fileUrl);
+        }
+
+        const fileURL = URL.createObjectURL(file);
+        this.fileUrl = fileURL;
+
+        // Determine file type for conditional rendering
+        if (file.type.startsWith('image/')) {
+          this.fileType = 'image';
+        } else if (file.type === 'application/pdf') {
+          this.fileType = 'pdf';
+        } else {
+          // Handle other file types if necessary, or show an error
+          console.error('Unsupported file type:', file.type);
+          this.fileType = ''; // Clear type
+          this.fileUrl = ''; // Clear URL
+          alert('Unsupported file type for preview.');
+          return; // Exit if type is unsupported
+        }
+
+        this.showFileModal = true;
+      }
+    },
+    closeFileModal() {
+      this.showFileModal = false;
+      // Revoke the object URL when the modal is closed
+      if (this.fileUrl) {
+        URL.revokeObjectURL(this.fileUrl);
+        this.fileUrl = '';
+        this.fileType = '';
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css');
 
@@ -1457,7 +1702,10 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  overflow-y: auto;
+  padding: 20px 0;
 }
+
 .modal-content {
   background: #fff;
   padding: 2rem;
@@ -1465,7 +1713,46 @@ body {
   max-width: 500px;
   width: 100%;
   position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
 }
+
+.rich-form-grid {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 15px;
+  -webkit-overflow-scrolling: touch; /* For better scrolling on iOS */
+  scrollbar-width: thin; /* For Firefox */
+}
+
+.rich-form-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rich-form-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb {
+  background: #ff914d;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb:hover {
+  background: #ff7e2e;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-height: 90vh;
+  }
+  
+  .rich-form-grid {
+    max-height: 65vh;
+  }
+}
+
 .close-modal {
   position: fixed;
   top: 20px;
@@ -1655,18 +1942,22 @@ body {
 }
 .form-group input,
 .form-group select {
-  padding: 0.6rem 0.9rem;
-  border: 1px solid #e0e7ef;
-  border-radius: 7px;
-  font-size: 1rem;
-  background: #f7fafd;
-  margin-top: 0.2rem;
-  transition: border 0.2s;
+  border: 2px solid #e0e7ef;
+  border-radius: 9px;
+  background: #fafdff;
+  padding: 1.1rem 1.1rem 0.5rem 1.1rem;
+  font-size: 1.05rem;
+  margin-top: 0.1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: 0 1.5px 8px #ff914d11;
+  color: var(--text-color); /* Ensure text color is readable */
 }
 .form-group input:focus,
 .form-group select:focus {
-  border: 1.5px solid #ff914d;
-  outline: none;
+  border: 2px solid #ff914d;
+  box-shadow: 0 2px 12px #ff914d22;
+  background: #fff7f0;
 }
 .checkbox-group {
   flex-direction: row;
@@ -1765,16 +2056,27 @@ body {
   gap: 0.3rem;
 }
 .modern-row-2 {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.7rem;
-  flex-wrap: wrap;
-  min-width: 0;
-  max-width: 100%;
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .modern-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .modern-row-2 {
+    grid-template-columns: 1fr;
+  }
 }
 .modern-row-3 {
   display: flex;
   gap: 0.7rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-width: 0;
   max-width: 100%;
 }
@@ -1783,33 +2085,85 @@ body {
   flex: 1 1 0;
   max-width: 100%;
 }
-.modern-group input {
-  border: 2px solid #b5d6f6;
-  border-radius: 7px;
+.modern-group input,
+.modern-group select {
+  border: 2px solid #e0e7ef;
+  border-radius: 9px;
   background: #fafdff;
-  padding: 0.6rem 0.9rem;
-  font-size: 1rem;
-  margin-top: 0.2rem;
-  transition: border 0.2s;
+  padding: 1.1rem 1.1rem 0.5rem 1.1rem;
+  font-size: 1.05rem;
+  margin-top: 0.1rem;
+  transition: border 0.2s, box-shadow 0.2s;
   outline: none;
+  box-shadow: 0 1.5px 8px #ff914d11;
+  color: var(--text-color); /* Ensure text color is readable */
 }
-.modern-group input:focus {
+.modern-group input:focus,
+.modern-group select:focus {
   border: 2px solid #ff914d;
+  box-shadow: 0 2px 12px #ff914d22;
+  background: #fff7f0;
 }
-.modern-group label {
-  font-size: 0.98rem;
+.modern-group input::placeholder,
+.modern-group input::-webkit-input-placeholder,
+.modern-group input:-moz-placeholder,
+.modern-group input::-moz-placeholder,
+.modern-group input:-ms-input-placeholder
+{
+  color: #555; /* Ensure placeholder text is clearly visible */
+  opacity: 1;
+  font-size: 1rem;
+  font-style: italic;
+}
+.modern-row-2, .modern-row-3 {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.modern-row-2 input, .modern-row-2 select {
+    flex: 1 1 auto; /* Allow inputs to grow and shrink */
+    min-width: 80px; /* Set a minimum width to prevent them from becoming too small */
+}
+.modern-row-3 input {
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 100%;
+}
+.rich-radio input[type="radio"] {
+  accent-color: #ff914d;
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.5em;
+  box-shadow: 0 1px 4px #ff914d22;
+  border-radius: 50%;
+  background: #fff9f3;
+  border: 2px solid #ff914d44;
+  transition: border 0.2s;
+}
+.rich-radio input[type="radio"]:focus {
+  border: 2px solid #ff914d;
+  outline: 2px solid #ff914d88;
+}
+.rich-radio label {
+  font-size: 1.08em;
   color: #444;
   font-weight: 500;
+  margin-right: 1.2em;
+  cursor: pointer;
 }
 .modern-radio-row {
   display: flex;
-  gap: 1.2rem;
+  gap: 1.5rem;
   align-items: center;
+  margin-top: 0.2rem;
 }
 .modern-radio-col {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.7rem;
+  margin-top: 0.2rem;
 }
 .radio-group label {
   font-weight: 400;
@@ -1925,7 +2279,8 @@ body {
   margin-bottom: 0.2rem;
   letter-spacing: 0.01em;
 }
-.modern-group input {
+.modern-group input,
+.modern-group select {
   border: 2px solid #e0e7ef;
   border-radius: 9px;
   background: #fafdff;
@@ -1935,14 +2290,21 @@ body {
   transition: border 0.2s, box-shadow 0.2s;
   outline: none;
   box-shadow: 0 1.5px 8px #ff914d11;
+  color: var(--text-color); /* Ensure text color is readable */
 }
-.modern-group input:focus {
+.modern-group input:focus,
+.modern-group select:focus {
   border: 2px solid #ff914d;
   box-shadow: 0 2px 12px #ff914d22;
   background: #fff7f0;
 }
-.modern-group input::placeholder {
-  color: #b5b5b5;
+.modern-group input::placeholder,
+.modern-group input::-webkit-input-placeholder,
+.modern-group input:-moz-placeholder,
+.modern-group input::-moz-placeholder,
+.modern-group input:-ms-input-placeholder
+{
+  color: #555; /* Ensure placeholder text is clearly visible */
   opacity: 1;
   font-size: 1rem;
   font-style: italic;
@@ -1950,9 +2312,13 @@ body {
 .modern-row-2, .modern-row-3 {
   display: flex;
   gap: 0.7rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-width: 0;
   max-width: 100%;
+}
+.modern-row-2 input, .modern-row-2 select {
+    flex: 1 1 auto; /* Allow inputs to grow and shrink */
+    min-width: 80px; /* Set a minimum width to prevent them from becoming too small */
 }
 .modern-row-3 input {
   min-width: 0;
@@ -2055,7 +2421,8 @@ body {
   .modern-group label {
     font-size: 0.93rem;
   }
-  .modern-group input {
+  .modern-group input,
+  .modern-group select {
     font-size: 0.93rem;
     padding: 0.7rem 0.5rem 0.3rem 0.5rem;
   }
@@ -2159,6 +2526,484 @@ body {
   background: #5c6bc0;
   transform: translateY(-2px) scale(1.04);
 }
+
+.file-upload-container {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.file-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 25px; /* Increased padding */
+  border: 2px dashed #b5d6f6; /* Adjusted dashed border color */
+  border-radius: 9px;
+  background: #fafdff;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  font-size: 1rem; /* Adjusted font size */
+  color: #666; /* Adjusted text color */
+  gap: 10px; /* Adjusted space between icon and text */
+}
+
+.file-upload-box:hover {
+  border-color: #a0c7f7; /* Slightly darker border on hover */
+  background-color: #eef7ff; /* Lighter background on hover */
+}
+
+.file-upload-box i {
+  font-size: 2.2rem; /* Adjusted icon size */
+  color: #66a3ff; /* Icon color */
+}
+
+.file-upload-container input[type="file"] {
+  display: none;
+}
+
+.file-info {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1rem;
+  background: #f0f4f8;
+  border: 1px solid #d0d9e4;
+  border-radius: 7px;
+  padding: 0.5rem 1rem;
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  justify-content: flex-start; /* Align items to the start when wrapped */
+}
+
+.choose-file-button {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  background-color: #e9ecef;
+  color: #495057;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem; /* Add margin bottom for spacing when wrapped */
+}
+
+.choose-file-button:hover {
+  background-color: #cdd4db;
+  color: #333;
+}
+
+.file-name {
+  font-weight: normal;
+  color: #555;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0.5rem; /* Add margin bottom for spacing when wrapped */
+}
+
+.view-file-button {
+  background: #6b7a8f;
+  color: #fff;
+  font-size: 0.9rem; /* Adjusted font size to match choose file button */
+  font-weight: 500;
+  border: none;
+  border-radius: 5px; /* Adjusted border radius to match choose file button */
+  padding: 0.4rem 0.8rem; /* Adjusted padding to match choose file button */
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(57, 73, 171, 0.2);
+  transition: background 0.2s, transform 0.2s;
+  margin-bottom: 0.5rem; /* Add margin bottom for spacing when wrapped */
+}
+
+.view-file-button:hover {
+  background: #5c6bc0;
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Add File View Modal Styles */
+.file-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000; /* Ensure it's above other modals */
+}
+
+.file-modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow: hidden; /* Hide overflow from file content */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  border: 1px solid #ccc; /* Light border */
+  border-radius: 50%; /* Circular shape */
+  width: 30px; /* Set a fixed width */
+  height: 30px; /* Set a fixed height */
+  display: flex; /* Use flex to center content */
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem; /* Adjusted font size */
+  font-weight: bold; /* Make it bold */
+  cursor: pointer;
+  color: #888;
+  z-index: 3001;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.file-modal-close:hover {
+  background-color: #ff5050; /* Red background on hover */
+  color: #fff; /* White text on hover */
+}
+
+.file-content {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Hide overflow of the content */
+}
+
+.file-content img,
+.file-content iframe {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Ensure image/pdf fits within container */
+}
+
+.input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ff914d;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.input-with-icon input,
+.input-with-icon select {
+  padding-left: 40px !important;
+}
+
+.modern-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .modern-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.suffix-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ff914d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px !important;
+}
+
+/* Improve form field focus styles */
+.modern-group input:focus:not(.readonly-field),
+.modern-group select:focus:not(.readonly-field) {
+  border: 2px solid #ff914d;
+  box-shadow: 0 0 0 3px rgba(255, 145, 77, 0.25);
+  background: #fff;
+}
+
+/* Add subtle hover effect */
+.modern-group input:hover:not(.readonly-field),
+.modern-group select:hover:not(.readonly-field) {
+  border-color: #ffb07b;
+}
+
+/* Readonly field styles */
+.readonly-field {
+  background-color: #f8f8f8 !important;
+  color: #555 !important;
+  cursor: not-allowed !important;
+  border-color: #e0e0e0 !important;
+  opacity: 0.85;
+}
+
+/* Modern redesign for the form */
+.rich-form-grid {
+  background: linear-gradient(145deg, #ffffff, #fcfcfc);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  padding: 2.5rem 2rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.rich-form-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rich-form-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb {
+  background: #ff914d;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb:hover {
+  background: #ff7e2e;
+}
+
+.section-header {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #f3f3f3;
+}
+
+.section-header:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: #ff914d;
+}
+
+.rich-section-icon {
+  margin-right: 10px;
+  color: #ff914d;
+}
+
+.modern-form-row {
+  margin-bottom: 2rem;
+}
+
+.modern-group {
+  margin-bottom: 1.5rem;
+}
+
+.modern-group label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+.modern-group input,
+.modern-group select {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.required {
+  color: #ff5252;
+}
+
+.file-upload-box {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 2px dashed #e2e8f0;
+}
+
+.file-upload-box:hover {
+  border-color: #ff914d;
+  background-color: #fff8f1;
+}
+
+.rich-submit {
+  background: linear-gradient(to right, #ff914d, #ff7e2e);
+  border-radius: 10px;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 145, 77, 0.3);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.rich-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 145, 77, 0.4);
+}
+
+.rich-divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, #f3f3f3, #ff914d33, #f3f3f3);
+  margin: 2rem 0;
+}
+
+.modern-radio-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.rich-radio {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 1rem;
+  cursor: pointer;
+}
+
+.rich-radio input[type="radio"] {
+  margin-right: 0.5rem;
+  accent-color: #ff914d;
+  width: 18px;
+  height: 18px;
+}
+
+/* Modal redesign */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.modal-content {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.modal-bar {
+  height: 6px;
+  background: linear-gradient(to right, #ff914d, #ff7e2e);
+}
+
+.pro-close {
+  background: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 15px;
+  right: 15px;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.pro-close:hover {
+  background: #ff5252;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.step-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #ff914d;
+  color: white;
+  border-radius: 50%;
+  margin-right: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* Add subtle hover effect */
+.modern-group input:hover:not(.readonly-field),
+.modern-group select:hover:not(.readonly-field) {
+  border-color: #ffb07b;
+}
+  
+/* Enhanced scrollable form styles */
+.rich-form-grid {
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-right: 15px;
+}
+
+.rich-form-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rich-form-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb {
+  background: #ff914d;
+  border-radius: 10px;
+}
+
+.rich-form-grid::-webkit-scrollbar-thumb:hover {
+  background: #ff7e2e;
+}
+
+@media (max-width: 768px) {
+  .rich-form-grid {
+    max-height: 65vh;
+    padding-right: 10px;
+  }
+}
+
+/* Modal styling enhancements */
+.modal-overlay {
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
 </style>
 
 

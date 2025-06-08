@@ -127,7 +127,21 @@ export default {
           }
 
           if (data.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
+            // Make sure age is included in the user data
+            if (data.user.age) {
+              // Convert age to string if it's not already
+              if (typeof data.user.age !== 'string') {
+                data.user.age = data.user.age.toString();
+              }
+              localStorage.setItem('user', JSON.stringify(data.user));
+            } else {
+              // If age is not included, add it to the user object
+              const userData = {
+                ...data.user,
+                age: data.user.age ? data.user.age.toString() : ''
+              };
+              localStorage.setItem('user', JSON.stringify(userData));
+            }
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('userRole', data.user.role);
           }

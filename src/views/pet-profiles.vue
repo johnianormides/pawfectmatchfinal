@@ -1330,10 +1330,28 @@ export default {
 /* Pet Grid Layout */
 .pet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
   margin-top: 1rem;
   flex-grow: 1;
+}
+
+.pet-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Wrapper for proper centering of pet cards */
+.pet-grid {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .pet-card {
@@ -1346,9 +1364,10 @@ export default {
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 400px; /* Increased fixed height to account for button position */
   border: 1px solid #f0f0f0;
-  max-height: 400px;
+  width: 260px;
+  flex: 0 0 260px;
 }
 
 .pet-card:hover {
@@ -1406,8 +1425,9 @@ export default {
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  height: 200px; /* Fixed height for consistent button alignment */
   overflow: hidden;
+  position: relative; /* For absolute positioning of the button */
 }
 
 .pet-info h2 {
@@ -1442,10 +1462,9 @@ export default {
 
 .pet-desc {
   color: #555;
-  margin: 0 0 1rem 0;
+  margin: 0;
   font-size: 0.85rem;
   line-height: 1.4;
-  flex-grow: 1;
   overflow: hidden;
   display: -webkit-box;
   display: box;
@@ -1454,6 +1473,7 @@ export default {
   -webkit-box-orient: vertical;
   box-orient: vertical;
   text-overflow: ellipsis;
+  max-height: 2.8em; /* Limit height to 2 lines */
 }
 
 .meet-pet-btn {
@@ -1468,7 +1488,11 @@ export default {
   transition: all 0.2s;
   text-align: center;
   box-shadow: 0 4px 12px rgba(247, 135, 31, 0.2);
-  margin-top: auto;
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  width: calc(100% - 2rem);
 }
 
 .meet-pet-btn:hover {
@@ -1563,8 +1587,9 @@ export default {
     min-width: 160px;
   }
 
-  .pet-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  .pet-card {
+    width: 220px;
+    flex: 0 0 220px;
   }
 }
 
@@ -1597,9 +1622,9 @@ export default {
     margin-top: 1rem;
   }
 
-  .pet-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
+  .pet-card {
+    width: 240px;
+    flex: 0 0 240px;
   }
 
   .pagination {
@@ -1613,12 +1638,12 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .pet-grid {
-    grid-template-columns: 1fr;
-  }
-
   .pet-card {
-    max-height: none;
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 320px;
+    height: 400px; /* Keep fixed height on mobile */
+    min-height: 400px;
   }
 
   .pet-image-container {

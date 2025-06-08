@@ -129,17 +129,22 @@
           <div v-if="pets.length === 0 && !loading.pets" class="loading-indicator">
             <p>No pets available at the moment. Check back soon!</p>
           </div>
-          <div class="pet-card" v-for="pet in pets" :key="pet.id">
+          <div class="pet-card" v-for="pet in displayedPets" :key="pet.id" @click="viewPetProfile(pet.id)">
             <img :src="pet.image" :alt="pet.name" @error="handleImageError($event)">
             <div class="pet-info">
               <h3>{{ pet.name }}</h3>
               <p><strong>Breed:</strong> {{ pet.breed }}</p>
               <p><strong>Age:</strong> {{ pet.age }}</p>
               <p><strong>Gender:</strong> {{ pet.gender || 'Unknown' }}</p>
-              <router-link v-if="isAuthenticated" :to="`/pet-profile/${pet.id}`" class="btn">Meet {{ pet.name }}</router-link>
-              <button v-else @click="showLoginRequired" class="btn">Meet {{ pet.name }}</button>
+              <p>{{ truncateDescription(pet.background) }}</p>
+              <div class="pet-btn-container">
+                <span class="btn">Meet {{ pet.name }}</span>
+              </div>
             </div>
           </div>
+        </div>
+        <div v-if="hasMorePets" class="see-more-container">
+          <router-link to="/pet-profiles" class="see-more-btn">See More Pets</router-link>
         </div>
       </div>
     </section>
@@ -244,6 +249,7 @@ export default {
         shelterInfo: true
       },
       pets: [],
+      petsLimit: 4, // Maximum number of pets to display
       steps: [],
       shelterInfo: {
         name: 'Angeles Pet Care',
@@ -316,6 +322,12 @@ export default {
   computed: {
     isAuthenticated() {
       return this.isLoggedIn;
+    },
+    displayedPets() {
+      return this.pets.slice(0, this.petsLimit);
+    },
+    hasMorePets() {
+      return this.pets.length > this.petsLimit;
     }
   },
   mounted() {
@@ -325,7 +337,7 @@ export default {
     this.checkAuthStatus();
 
     // Fetch data from the backend
-    this.fetchFeaturedPets();
+    this.fetchPets();
     this.fetchAdoptionSteps();
     this.fetchShelterInfo();
     window.addEventListener('resize', this.checkTablet);
@@ -457,80 +469,29 @@ export default {
     },
 
     // API Methods
-    async fetchFeaturedPets() {
+    async fetchPets() {
       try {
-        console.log('Fetching featured pets from Supabase...');
         this.loading.pets = true;
-        this.pets = []; // Clear any existing pets to ensure we're not showing stale data
-
-        const response = await fetch('http://localhost:5000/api/featured-pets');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch featured pets: ${response.status} ${response.statusText}`);
-        }
-
+        const response = await fetch('http://localhost:5000/api/pet');
+        if (!response.ok) throw new Error('Failed to fetch pets');
         const result = await response.json();
-        console.log('Featured pets API response:', result);
-
-        if (!result.success) {
-          throw new Error(result.message || 'API returned unsuccessful response');
-        }
-
-        if (!result.data || !Array.isArray(result.data)) {
-          throw new Error('API returned invalid data format');
-        }
-
-        console.log(`Processing ${result.data.length} pets from Supabase`);
-
-        // Since the featured-pets endpoint might not include status,
-        // we need to check each pet's status individually
-        const availablePets = [];
-
-        for (const pet of result.data) {
-          try {
-            // Get detailed pet info to check status
-            const detailResponse = await fetch('http://localhost:5000/api/pet/' + pet.id);
-            if (detailResponse.ok) {
-              const detailResult = await detailResponse.json();
-              if (detailResult.success && detailResult.data) {
-                const petDetail = detailResult.data;
-                const status = (petDetail.status || '').toLowerCase();
-
-                // Only add pets that are not adopted
-                if (status !== 'adopted') {
-                  availablePets.push(pet);
-                } else {
-                  console.log('Skipping adopted pet: ' + pet.name + ' (' + pet.id + ')');
-                }
-              }
-            }
-          } catch (detailError) {
-            console.error('Error fetching details for pet ' + pet.id + ':', detailError);
-            // If we can't get details, assume the pet is available
-            availablePets.push(pet);
-          }
-        }
-
-        console.log(`Filtered to ${availablePets.length} available pets`);
-
-        // Map the available pets to our display format
-        this.pets = availablePets.map(pet => {
-          return {
+        if (!result.success || !result.data) throw new Error(result.message || 'Failed to fetch pets');
+        
+        // Get all available pets (not just 4)
+        this.pets = result.data
+          .filter(pet => pet.status && pet.status.toLowerCase() === 'available')
+          .map(pet => ({
             id: pet.id,
             name: pet.name || 'Unnamed Pet',
             breed: pet.breed || 'Unknown Breed',
             age: pet.age || 'Unknown',
-            image: pet.image_url || '/Img/default-pet.jpg',
+            image: pet.photo_url || '/Img/default-pet.jpg',
             gender: pet.gender || 'Unknown',
             background: pet.description || 'A wonderful companion waiting for a forever home.'
-          };
-        });
-
-        console.log('Successfully loaded available pets from Supabase:', this.pets);
+          }));
       } catch (error) {
-        console.error('Error fetching pets from Supabase:', error);
-        // Only use fallback data for critical errors, not for empty results
-        // this.pets = this.fallbackPets;
-        alert('Failed to load pets from database. Please check the console for details.');
+        console.error('Error fetching pets:', error);
+        // Optionally use fallbackPets here if you want
       } finally {
         this.loading.pets = false;
       }
@@ -574,7 +535,21 @@ export default {
       } finally {
         this.loading.shelterInfo = false;
       }
-    }
+    },
+    truncateDescription(desc) {
+      if (!desc) return '';
+      return desc.length > 80 ? desc.slice(0, 80) + '...' : desc;
+    },
+    viewPetProfile(id) {
+      // Check if user is logged in before allowing access to pet profile
+      if (this.isLoggedIn) {
+        this.$router.push(`/pet-profile/${id}`);
+      } else {
+        // Show message and redirect to login page
+        alert('You need to log in or sign up to view pet details!');
+        this.$router.push('/login');
+      }
+    },
   }
 }
 </script>
@@ -843,7 +818,6 @@ body {
   padding: 8px 15px;
   border-radius: 5px;
   font-weight: 600;
-  transition: all 0.3s ease;
 }
 
 .login-btn {
@@ -1239,6 +1213,17 @@ body {
   .sidebar-links a {
     padding: 15px 20px;
   }
+  .pet-card {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 300px;
+    height: auto;
+    min-height: 360px;
+  }
+   
+  .featured-pets {
+    padding: 0 20px;
+  }
 }
 
 .logo-img {
@@ -1352,9 +1337,12 @@ body {
 }
 
 .pets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
   gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .pet-card {
@@ -1365,6 +1353,10 @@ body {
     8px 8px 16px var(--shadow-dark),
     -8px -8px 16px var(--shadow-light);
   transition: var(--transition);
+  width: 250px;
+  flex: 0 0 250px;
+  height: 360px; /* Fixed height for consistency */
+  cursor: pointer; /* Indicate clickable */
 }
 
 .pet-card:hover {
@@ -1382,6 +1374,10 @@ body {
 
 .pet-info {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 160px;
+  overflow: hidden;
 }
 
 .pet-info h3 {
@@ -1409,6 +1405,12 @@ body {
   box-shadow:
     4px 4px 8px var(--shadow-dark),
     -4px -4px 8px var(--shadow-light);
+  display: block;
+}
+
+.pet-btn-container {
+  margin-top: auto;
+  width: 100%;
 }
 
 .pet-info .btn:hover {
@@ -1575,6 +1577,15 @@ body {
   .footer-column {
     flex-basis: 100%;
   }
+   
+  .pet-card {
+    width: 220px;
+    flex: 0 0 220px;
+  }
+   
+  .featured-pets {
+    padding: 0 40px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1586,6 +1597,29 @@ body {
 
   .footer-column {
     margin-bottom: 1.5rem;
+  }
+   
+  .pet-card {
+    width: 200px;
+    flex: 0 0 200px;
+  }
+   
+  .featured-pets {
+    padding: 0 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pet-card {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 300px;
+    height: auto;
+    min-height: 360px;
+  }
+   
+  .featured-pets {
+    padding: 0 20px;
   }
 }
 
@@ -1660,5 +1694,37 @@ body {
 
 .main-container {
   padding-top: var(--nav-height);
+}
+
+/* See More Pets Button */
+.see-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  width: 100%;
+}
+
+.see-more-btn {
+  text-decoration: none;
+  display: inline-block;
+  padding: 15px 30px;
+  border-radius: 50px;
+  background: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 145, 77, 0.3);
+  text-align: center;
+}
+
+.see-more-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 145, 77, 0.4);
+}
+
+.see-more-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(255, 145, 77, 0.2);
 }
 </style>

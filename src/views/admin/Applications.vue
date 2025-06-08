@@ -462,7 +462,7 @@
                 </button>
                 <button class="reject-btn" @click="showRejectModal(selectedApplication)">
                   <i class="fas fa-times"></i>
-                  Reject Application
+                  Decline Application
                 </button>
               </div>
             </div>
@@ -473,18 +473,18 @@
         <div v-if="showRejectionModal" class="modal-overlay" @click.self="cancelRejection">
           <div class="modal rejection-modal">
             <div class="modal-header">
-              <h3>Provide Rejection Reason</h3>
+              <h3>Provide Decline Reason</h3>
               <button class="close-btn" @click="cancelRejection">&times;</button>
             </div>
             <div class="modal-content">
-              <p class="rejection-info">Please provide a reason for rejecting this application. This information will be visible to the applicant.</p>
+              <p class="rejection-info">Please provide a reason for declining this application. This information will be visible to the applicant.</p>
 
               <div class="form-group">
-                <label for="rejectionReason">Rejection Reason</label>
+                <label for="rejectionReason">Declining Reason</label>
                 <textarea
                   id="rejectionReason"
                   v-model="rejectionReason"
-                  placeholder="Enter the reason for rejection..."
+                  placeholder="Enter the reason for declining..."
                   rows="4"
                   required
                 ></textarea>
@@ -497,7 +497,7 @@
                 </button>
                 <button class="confirm-reject-btn" @click="confirmRejection" :disabled="!rejectionReason.trim()">
                   <i class="fas fa-check"></i>
-                  Confirm Rejection
+                  Confirm Decline
                 </button>
               </div>
             </div>
