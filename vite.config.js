@@ -1,13 +1,17 @@
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
+import VueDevTools from 'vite-plugin-vue-devtools'
 
 export default defineConfig({
-	plugins: [vue()],
+	plugins: [
+		vue(),
+		VueDevTools(),
+	],
 	optimizeDeps: {
 		include: ["@stackblitz/sdk"],
 	},
-	base: "/",
+	base: "/PAWFFECT-FINAL-NA/",
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url)),
